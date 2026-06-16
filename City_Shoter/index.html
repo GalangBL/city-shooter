@@ -184,6 +184,13 @@
         font-size: 10px;
       }
 
+      /* Sembunyikan controls di desktop (bukan touch device) */
+      @media (hover: hover) and (pointer: fine) {
+        #controls {
+          display: none !important;
+        }
+      }
+
       /* Tombol TEMBAK besar merah */
       #btn-shoot {
         width: 86px;
@@ -372,7 +379,7 @@
           musuhJongkokAim: "musuh_jongkok_aim",
           musuhJongkokFire: "musuh_jongkok_fire",
           label: "LEVEL 1 COMPLETE!",
-          timeLimit: 90,
+          timeLimit: 120, // 2 menit untuk 10 musuh
         },
         2: {
           bg: "bg2",
@@ -383,7 +390,7 @@
           enemySpd: [90, 150],
           enemyBulletSpd: 380,
           aimTime: [0.6, 1.0],
-          jln: ["l2jln1", "l2jln2", "l2jln3", "l2jln3"],
+          jln: ["jln1", "jln2", "jln3", "jln4"], // pakai walk level 1
           lari: ["lari1", "lari2", "lari3", "lari4"],
           loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
           jongkok: ["l2jongkok1", "l2jongkok2", "l2jongkok3", "l2jongkok3"],
@@ -407,7 +414,7 @@
           musuhJongkokAim: "l2musuh_jongkok_aim",
           musuhJongkokFire: "l2musuh_jongkok_fire",
           label: "LEVEL 2 COMPLETE!",
-          timeLimit: 90,
+          timeLimit: 120, // naik dari 90 → 120 detik
         },
         3: {
           bg: "bg3",
@@ -615,6 +622,7 @@
       let transitionTimer = 0;
       let transitionNextLevel = 1;
       let levelTimer = 0; // countdown timer per level
+      let highScore = parseInt(localStorage.getItem("cs_highscore") || "0");
 
       // === PLAYER ===
       const P = {
@@ -968,6 +976,10 @@
           if (P.dead) {
             resetLevel(currentLevel);
           } else if (gamePhase === "levelComplete" && currentLevel >= 3) {
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem("cs_highscore", highScore);
+            }
             gamePhase = "win";
           } else {
             startReload();
@@ -1043,7 +1055,13 @@
           P.deathTimer += dt;
           P.vx = 0;
           // Setelah 2 detik mati, masuk game over screen
-          if (P.deathTimer > 2.0) gamePhase = "gameover";
+          if (P.deathTimer > 2.0) {
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem("cs_highscore", highScore);
+            }
+            gamePhase = "gameover";
+          }
           particles = particles.filter((p) => {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
@@ -1286,6 +1304,13 @@
           X.font = "14px monospace";
           X.fillText("Tekan sembarang tombol untuk mulai", 400, 330);
 
+          // High Score
+          if (highScore > 0) {
+            X.fillStyle = "#ffdd00";
+            X.font = "bold 13px monospace";
+            X.fillText("🏆 BEST SCORE: " + highScore, 400, 355);
+          }
+
           // Controls
           X.fillStyle = "#666";
           X.font = "12px monospace";
@@ -1329,6 +1354,13 @@
           X.font = "bold 20px monospace";
           X.fillText("TAP / R  ▶  COBA LAGI", 0, 8);
           X.restore();
+          // High score di game over
+          if (highScore > 0) {
+            X.fillStyle = "#ffdd00";
+            X.font = "bold 13px monospace";
+            X.textAlign = "center";
+            X.fillText("🏆 BEST: " + highScore, 400, 335);
+          }
           X.textAlign = "left";
           return;
         }
