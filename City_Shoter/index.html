@@ -325,13 +325,32 @@
       );
 
       // Tap canvas: handle semua phase game (menu, levelComplete, gameover, win)
-      function handleCanvasTap() {
+      function handleCanvasTap(evt) {
         if (typeof gamePhase === "undefined") return;
         if (gamePhase === "menu") {
-          if (typeof startGame === "function") startGame();
+          // Deteksi tap di area tombol menu
+          if (menuShowHelp) {
+            menuShowHelp = false;
+            return;
+          }
+          // Koordinat tap relatif ke canvas
+          const rect = C.getBoundingClientRect();
+          const scaleX = 800 / rect.width;
+          const scaleY = 400 / rect.height;
+          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+          const cx = (clientX - rect.left) * scaleX;
+          const cy = (clientY - rect.top) * scaleY;
+          // Area tombol PLAY (y: 230-280) dan HOW TO PLAY (y: 295-335)
+          if (cy >= 225 && cy <= 280) {
+            menuSelected = 0;
+            startGame();
+          } else if (cy >= 290 && cy <= 340) {
+            menuSelected = 1;
+            menuShowHelp = true;
+          }
         } else if (gamePhase === "levelComplete") {
           if (typeof currentLevel !== "undefined" && currentLevel < 3) {
-            // Lanjut ke level berikutnya
             transitionNextLevel = currentLevel + 1;
             gamePhase = "transition";
             transitionTimer = 0;
@@ -622,7 +641,9 @@
       let currentLevel = 1;
       let gamePhase = "menu"; // "menu" | "playing" | "levelComplete" | "transition" | "gameover" | "win"
       let levelCompleteTimer = 0;
-      let menuPulse = 0; // animasi teks menu
+      let menuPulse = 0;
+      let menuSelected = 0; // 0=PLAY, 1=HOW TO PLAY, item yang dipilih
+      let menuShowHelp = false; // tampilkan layar bantuan
       let transitionTimer = 0;
       let transitionNextLevel = 1;
       let levelTimer = 0; // countdown timer per level
@@ -955,9 +976,22 @@
         // Saat transisi: abaikan semua input
         if (gamePhase === "transition") return;
 
-        // Menu: tekan apa saja untuk mulai
+        // Menu: navigasi dengan arrow + enter
         if (gamePhase === "menu") {
-          startGame();
+          if (menuShowHelp) {
+            // Tekan apapun untuk kembali dari help
+            menuShowHelp = false;
+            return;
+          }
+          const menuItems = 2; // PLAY, HOW TO PLAY
+          if (e.code === "ArrowUp" || e.code === "KeyW") {
+            menuSelected = (menuSelected - 1 + menuItems) % menuItems;
+          } else if (e.code === "ArrowDown" || e.code === "KeyS") {
+            menuSelected = (menuSelected + 1) % menuItems;
+          } else if (e.code === "Enter" || e.code === "Space") {
+            if (menuSelected === 0) startGame();
+            else if (menuSelected === 1) menuShowHelp = true;
+          }
           return;
         }
 
@@ -1273,56 +1307,106 @@
             X.fillStyle = "#0a0a1a";
             X.fillRect(0, 0, 800, 400);
           }
-          // Overlay lebih tipis supaya gambar menu tetap kelihatan jelas
           X.fillStyle = "rgba(0,0,0,0.45)";
           X.fillRect(0, 0, 800, 400);
 
-          // Title
-          X.shadowColor = "#ff4400";
-          X.shadowBlur = 30;
-          X.fillStyle = "#ff8800";
-          X.font = "900 62px 'Orbitron', monospace";
+          // === LAYAR BANTUAN ===
+          if (menuShowHelp) {
+            X.fillStyle = "rgba(0,0,0,0.85)";
+            X.fillRect(80, 40, 640, 320);
+            X.strokeStyle = "#ff8800";
+            X.lineWidth = 2;
+            X.strokeRect(80, 40, 640, 320);
+            X.textAlign = "center";
+            X.fillStyle = "#ff8800";
+            X.font = "bold 20px 'Orbitron', monospace";
+            X.fillText("CARA BERMAIN", 400, 80);
+            X.fillStyle = "#fff";
+            X.font = "14px monospace";
+            const helps = [
+              "A / ← →  D  =  Gerak kiri kanan",
+              "SHIFT       =  Lari",
+              "W / ↑       =  Lompat",
+              "S / ↓       =  Jongkok (hindari peluru)",
+              "SPACE       =  Tembak",
+              "R           =  Reload senjata",
+              "",
+              "Kalahkan semua musuh sebelum waktu habis!",
+              "Level 3 : Lawan FINAL BOSS",
+            ];
+            helps.forEach((h, i) => {
+              X.fillStyle = i === helps.length - 1 ? "#ffdd00" : "#ddd";
+              X.fillText(h, 400, 115 + i * 24);
+            });
+            X.fillStyle = "#888";
+            X.font = "13px monospace";
+            X.fillText("Tekan sembarang tombol untuk kembali", 400, 340);
+            X.textAlign = "left";
+            return;
+          }
+
+          // === TITLE ===
           X.textAlign = "center";
-          X.fillText("CITY SHOOTER", 400, 138);
-          X.shadowBlur = 0;
-
-          X.fillStyle = "#ffdd00";
-          X.font = "bold 14px 'Orbitron', monospace";
-          X.fillText("3 STAGE  •  FINAL BOSS  •  SIDE SCROLLER", 400, 172);
-
-          // Tombol play (pulsing)
-          const pulse = 0.85 + Math.sin(menuPulse) * 0.15;
-          X.save();
-          X.translate(400, 260);
-          X.scale(pulse, pulse);
+          X.shadowColor = "#ff4400";
+          X.shadowBlur = 35;
           X.fillStyle = "#ff8800";
-          X.fillRect(-110, -28, 220, 56);
-          X.strokeStyle = "#fff";
-          X.lineWidth = 2;
-          X.strokeRect(-110, -28, 220, 56);
-          X.fillStyle = "#000";
-          X.font = "bold 24px monospace";
-          X.fillText("▶  MULAI", 0, 10);
-          X.restore();
-
-          X.fillStyle = "#aaaaaa";
-          X.font = "14px monospace";
-          X.fillText("Tekan sembarang tombol untuk mulai", 400, 330);
+          X.font = "900 58px 'Orbitron', monospace";
+          X.fillText("CITY SHOOTER", 400, 120);
+          X.shadowBlur = 0;
+          X.fillStyle = "#ffdd00";
+          X.font = "bold 12px 'Orbitron', monospace";
+          X.fillText("3 STAGE  •  FINAL BOSS  •  SIDE SCROLLER", 400, 150);
 
           // High Score
           if (highScore > 0) {
             X.fillStyle = "#ffdd00";
-            X.font = "bold 13px monospace";
-            X.fillText("🏆 BEST SCORE: " + highScore, 400, 355);
+            X.font = "bold 12px monospace";
+            X.fillText("🏆 BEST: " + highScore, 400, 178);
           }
 
-          // Controls
-          X.fillStyle = "#666";
-          X.font = "12px monospace";
+          // === MENU ITEMS ===
+          const menuItems = ["▶   MAIN SEKARANG", "?   CARA BERMAIN"];
+          const menuY = [245, 305];
+          menuItems.forEach((item, i) => {
+            const selected = menuSelected === i;
+            const py = menuY[i];
+
+            // Shadow/glow saat dipilih
+            if (selected) {
+              X.shadowColor = "#ff8800";
+              X.shadowBlur = 20;
+            }
+
+            // Background tombol
+            X.fillStyle = selected ? "rgba(255,136,0,0.3)" : "rgba(0,0,0,0.55)";
+            X.fillRect(250, py - 26, 300, 50);
+
+            // Border
+            X.strokeStyle = selected ? "#ff8800" : "rgba(255,136,0,0.35)";
+            X.lineWidth = selected ? 2 : 1;
+            X.strokeRect(250, py - 26, 300, 50);
+
+            // Teks
+            X.fillStyle = selected ? "#ffffff" : "#aaaaaa";
+            X.font = selected ? "bold 18px monospace" : "16px monospace";
+            X.fillText(item, 400, py + 2);
+            X.shadowBlur = 0;
+
+            // Selector panah kiri
+            if (selected) {
+              X.fillStyle = "#ff8800";
+              X.font = "bold 16px monospace";
+              X.fillText("►", 258, py + 2);
+            }
+          });
+
+          // Petunjuk navigasi
+          X.fillStyle = "rgba(150,150,150,0.7)";
+          X.font = "11px monospace";
           X.fillText(
-            "A/D=gerak  SHIFT=lari  W=loncat  S=jongkok  SPACE=tembak  R=reload",
+            "↑ ↓ untuk pilih  •  ENTER / TAP untuk konfirmasi",
             400,
-            370,
+            375,
           );
           X.textAlign = "left";
           return;
