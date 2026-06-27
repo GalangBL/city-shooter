@@ -529,6 +529,10 @@
       // Background
       loadImg("bg1", "asset_BG/bglevel1.png");
       loadImg("bg2", "asset_BG/bglvel2.png");
+      loadImg(
+        "bgmenu",
+        "asset_bgmainmenu/ChatGPT Image Jun 27, 2026, 02_10_32 PM.png",
+      );
 
       // Musuh Level 1
       loadImg("musuh_aim", "asset_musuhlevel1/musuhlevel1(1).png");
@@ -1261,15 +1265,16 @@
 
         // === MAIN MENU ===
         if (gamePhase === "menu") {
-          // Background menu pakai bg1
-          const bgImg = IMGS["bg1"];
+          // Background menu pakai gambar custom dari ChatGPT
+          const bgImg = IMGS["bgmenu"] || IMGS["bg1"];
           if (bgImg) {
             X.drawImage(bgImg, 0, 0, 800, 400);
           } else {
             X.fillStyle = "#0a0a1a";
             X.fillRect(0, 0, 800, 400);
           }
-          X.fillStyle = "rgba(0,0,0,0.55)";
+          // Overlay lebih tipis supaya gambar menu tetap kelihatan jelas
+          X.fillStyle = "rgba(0,0,0,0.45)";
           X.fillRect(0, 0, 800, 400);
 
           // Title
