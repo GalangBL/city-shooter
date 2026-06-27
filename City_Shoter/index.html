@@ -1,355 +1,413 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1.0,user-scalable=no"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap"
-      rel="stylesheet"
-    />
-    <title>City Shooter</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
 
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-        background: #000;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <title>City Shooter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      #wrapper {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-      canvas {
-        display: block;
-        /* Canvas selalu fit layar penuh, kontrol overlay di atasnya */
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: min(100vw, 200vh);
-        height: min(50vw, 100vh);
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
-      }
+    #wrapper {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-      /* Fullscreen */
-      :fullscreen canvas,
-      :-webkit-full-screen canvas {
-        width: 100vw;
-        height: 50vw;
-        max-height: 100vh;
-      }
+    canvas {
+      display: block;
+      /* Canvas selalu fit layar penuh, kontrol overlay di atasnya */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(100vw, 200vh);
+      height: min(50vw, 100vh);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
 
-      /* === Fullscreen Button === */
-      #fsbtn {
-        position: absolute;
-        top: 8px;
-        right: 10px;
-        background: rgba(255, 136, 0, 0.15);
-        border: 1px solid #ff8800;
-        color: #ff8800;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 4px 8px;
-        cursor: pointer;
-        border-radius: 4px;
-        z-index: 20;
-      }
+    /* Fullscreen */
+    :fullscreen canvas,
+    :-webkit-full-screen canvas {
+      width: 100vw;
+      height: 50vw;
+      max-height: 100vh;
+    }
 
-      #fsbtn:hover {
-        background: rgba(255, 136, 0, 0.35);
-      }
+    /* === Fullscreen Button === */
+    #fsbtn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: rgba(255, 136, 0, 0.15);
+      border: 1px solid #ff8800;
+      color: #ff8800;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 4px;
+      z-index: 20;
+    }
 
-      /* === Mobile Touch Controls === */
+    #fsbtn:hover {
+      background: rgba(255, 136, 0, 0.35);
+    }
+
+    /* === Mobile Touch Controls === */
+    #controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 35vh;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 10px 14px;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    @media (orientation: landscape) {
       #controls {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 35vh;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        padding: 0 10px 14px;
-        pointer-events: none;
-        z-index: 15;
+        height: 30vh;
       }
+    }
 
-      @media (orientation: landscape) {
-        #controls {
-          height: 30vh;
-        }
+    /* Base tombol bulat */
+    .cbtn {
+      pointer-events: all;
+      border-radius: 50%;
+      border: 2.5px solid rgba(255, 136, 0, 0.7);
+      background: rgba(0, 0, 0, 0.5);
+      color: #ff8800;
+      font-family: monospace;
+      font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      text-align: center;
+      line-height: 1.15;
+      transition:
+        background 0.08s,
+        transform 0.06s;
+    }
+
+    .cbtn:active,
+    .cbtn.pressed {
+      background: rgba(255, 136, 0, 0.4);
+      border-color: #fff;
+      transform: scale(0.92);
+    }
+
+    /* === KIRI: D-pad === */
+    #dpad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    #dpad-row {
+      display: flex;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    /* Tombol ← → besar */
+    .btn-move {
+      width: 70px;
+      height: 70px;
+      font-size: 26px;
+    }
+
+    /* Tombol jongkok pipih di bawah */
+    #btn-crouch {
+      width: 148px;
+      height: 44px;
+      border-radius: 22px;
+      font-size: 12px;
+    }
+
+    /* === KANAN: Action Buttons === */
+    #actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    #actions-top {
+      display: flex;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    /* Tombol kecil: RELOAD, LARI, LOMPAT */
+    .btn-sm {
+      width: 56px;
+      height: 56px;
+      font-size: 10px;
+    }
+
+    /* Sembunyikan controls di desktop (bukan touch device) */
+    @media (hover: hover) and (pointer: fine) {
+      #controls {
+        display: none !important;
       }
+    }
 
-      /* Base tombol bulat */
-      .cbtn {
-        pointer-events: all;
-        border-radius: 50%;
-        border: 2.5px solid rgba(255, 136, 0, 0.7);
-        background: rgba(0, 0, 0, 0.5);
-        color: #ff8800;
-        font-family: monospace;
-        font-weight: bold;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: none;
-        text-align: center;
-        line-height: 1.15;
-        transition:
-          background 0.08s,
-          transform 0.06s;
-      }
+    /* Tombol TEMBAK besar merah */
+    #btn-shoot {
+      width: 86px;
+      height: 86px;
+      font-size: 15px;
+      background: rgba(160, 0, 0, 0.55);
+      border-color: rgba(255, 60, 60, 0.85);
+      color: #ff5555;
+    }
 
-      .cbtn:active,
-      .cbtn.pressed {
-        background: rgba(255, 136, 0, 0.4);
-        border-color: #fff;
-        transform: scale(0.92);
-      }
+    #btn-shoot:active,
+    #btn-shoot.pressed {
+      background: rgba(255, 30, 30, 0.65);
+    }
+  </style>
+</head>
 
-      /* === KIRI: D-pad === */
-      #dpad {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        pointer-events: none;
-      }
+<body>
+  <div id="wrapper">
+    <canvas id="c" width="800" height="400"></canvas>
+    <button id="fsbtn" onclick="toggleFS()">⛶ FS</button>
 
-      #dpad-row {
-        display: flex;
-        gap: 6px;
-        pointer-events: none;
-      }
-
-      /* Tombol ← → besar */
-      .btn-move {
-        width: 70px;
-        height: 70px;
-        font-size: 26px;
-      }
-
-      /* Tombol jongkok pipih di bawah */
-      #btn-crouch {
-        width: 148px;
-        height: 44px;
-        border-radius: 22px;
-        font-size: 12px;
-      }
-
-      /* === KANAN: Action Buttons === */
-      #actions {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
-        pointer-events: none;
-      }
-
-      #actions-top {
-        display: flex;
-        gap: 6px;
-        pointer-events: none;
-      }
-
-      /* Tombol kecil: RELOAD, LARI, LOMPAT */
-      .btn-sm {
-        width: 56px;
-        height: 56px;
-        font-size: 10px;
-      }
-
-      /* Sembunyikan controls di desktop (bukan touch device) */
-      @media (hover: hover) and (pointer: fine) {
-        #controls {
-          display: none !important;
-        }
-      }
-
-      /* Tombol TEMBAK besar merah */
-      #btn-shoot {
-        width: 86px;
-        height: 86px;
-        font-size: 15px;
-        background: rgba(160, 0, 0, 0.55);
-        border-color: rgba(255, 60, 60, 0.85);
-        color: #ff5555;
-      }
-
-      #btn-shoot:active,
-      #btn-shoot.pressed {
-        background: rgba(255, 30, 30, 0.65);
-      }
-    </style>
-  </head>
-
-  <body>
-    <div id="wrapper">
-      <canvas id="c" width="800" height="400"></canvas>
-      <button id="fsbtn" onclick="toggleFS()">⛶ FS</button>
-
-      <!-- Mobile Touch Controls -->
-      <div id="controls">
-        <!-- KIRI: D-pad -->
-        <div id="dpad">
-          <div id="dpad-row">
-            <div class="cbtn btn-move" id="btn-left">&#8592;</div>
-            <div class="cbtn btn-move" id="btn-right">&#8594;</div>
-          </div>
-          <div class="cbtn" id="btn-crouch">&#8595; JONGKOK</div>
+    <!-- Mobile Touch Controls -->
+    <div id="controls">
+      <!-- KIRI: D-pad -->
+      <div id="dpad">
+        <div id="dpad-row">
+          <div class="cbtn btn-move" id="btn-left">&#8592;</div>
+          <div class="cbtn btn-move" id="btn-right">&#8594;</div>
         </div>
+        <div class="cbtn" id="btn-crouch">&#8595; JONGKOK</div>
+      </div>
 
-        <!-- KANAN: Action -->
-        <div id="actions">
-          <div id="actions-top">
-            <div class="cbtn btn-sm" id="btn-reload">&#8635;<br />RELOAD</div>
-            <div class="cbtn btn-sm" id="btn-run">&#9654;&#9654;<br />LARI</div>
-            <div class="cbtn btn-sm" id="btn-jump">&#8593;<br />LOMPAT</div>
-          </div>
-          <div class="cbtn" id="btn-shoot" style="align-self: flex-end">
-            &#9654; TEMBAK
-          </div>
+      <!-- KANAN: Action -->
+      <div id="actions">
+        <div id="actions-top">
+          <div class="cbtn btn-sm" id="btn-reload">&#8635;<br />RELOAD</div>
+          <div class="cbtn btn-sm" id="btn-run">&#9654;&#9654;<br />LARI</div>
+          <div class="cbtn btn-sm" id="btn-jump">&#8593;<br />LOMPAT</div>
+        </div>
+        <div class="cbtn" id="btn-shoot" style="align-self: flex-end">
+          &#9654; TEMBAK
         </div>
       </div>
     </div>
-    <script>
-      function toggleFS() {
-        const el = document.getElementById("wrapper");
-        if (!document.fullscreenElement) {
-          el.requestFullscreen && el.requestFullscreen();
-        } else {
-          document.exitFullscreen && document.exitFullscreen();
-        }
+  </div>
+  <script>
+    function toggleFS() {
+      const el = document.getElementById("wrapper");
+      if (!document.fullscreenElement) {
+        el.requestFullscreen && el.requestFullscreen();
+      } else {
+        document.exitFullscreen && document.exitFullscreen();
       }
-      // Update button label on change
-      document.addEventListener("fullscreenchange", () => {
-        const btn = document.getElementById("fsbtn");
-        btn.textContent = document.fullscreenElement ? "✕ Exit" : "⛶ FS";
-      });
+    }
+    // Update button label on change
+    document.addEventListener("fullscreenchange", () => {
+      const btn = document.getElementById("fsbtn");
+      btn.textContent = document.fullscreenElement ? "✕ Exit" : "⛶ FS";
+    });
 
-      // === MOBILE TOUCH CONTROLS ===
-      // Dipasang setelah DOM siap; K[] didefinisikan di bawah tapi diakses saat touch
-      // Mapping: tombol → array kode keyboard yang disimulasi
-      const btnMap = {
-        "btn-left": ["ArrowLeft", "KeyA"],
-        "btn-right": ["ArrowRight", "KeyD"],
-        "btn-crouch": ["ArrowDown", "KeyS"],
-        "btn-run": ["ShiftLeft"],
-        "btn-jump": ["ArrowUp", "KeyW"],
-        "btn-reload": ["KeyR"],
+    // === MOBILE TOUCH CONTROLS ===
+    // Dipasang setelah DOM siap; K[] didefinisikan di bawah tapi diakses saat touch
+    // Mapping: tombol → array kode keyboard yang disimulasi
+    const btnMap = {
+      "btn-left": ["ArrowLeft", "KeyA"],
+      "btn-right": ["ArrowRight", "KeyD"],
+      "btn-crouch": ["ArrowDown", "KeyS"],
+      "btn-run": ["ShiftLeft"],
+      "btn-jump": ["ArrowUp", "KeyW"],
+      "btn-reload": ["KeyR"],
+    };
+
+    function wireBtn(id, keys, onDown, onUp) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const down = (e) => {
+        e.preventDefault();
+        el.classList.add("pressed");
+        if (onDown) onDown();
+        else
+          keys.forEach((k) => {
+            if (typeof K !== "undefined") K[k] = true;
+          });
       };
+      const up = (e) => {
+        e.preventDefault();
+        el.classList.remove("pressed");
+        if (onUp) onUp();
+        else
+          keys.forEach((k) => {
+            if (typeof K !== "undefined") K[k] = false;
+          });
+      };
+      el.addEventListener("touchstart", down, { passive: false });
+      el.addEventListener("touchend", up, { passive: false });
+      el.addEventListener("touchcancel", up, { passive: false });
+      el.addEventListener("mousedown", down);
+      el.addEventListener("mouseup", up);
+      el.addEventListener("mouseleave", up);
+    }
 
-      function wireBtn(id, keys, onDown, onUp) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const down = (e) => {
-          e.preventDefault();
-          el.classList.add("pressed");
-          if (onDown) onDown();
-          else
-            keys.forEach((k) => {
-              if (typeof K !== "undefined") K[k] = true;
-            });
-        };
-        const up = (e) => {
-          e.preventDefault();
-          el.classList.remove("pressed");
-          if (onUp) onUp();
-          else
-            keys.forEach((k) => {
-              if (typeof K !== "undefined") K[k] = false;
-            });
-        };
-        el.addEventListener("touchstart", down, { passive: false });
-        el.addEventListener("touchend", up, { passive: false });
-        el.addEventListener("touchcancel", up, { passive: false });
-        el.addEventListener("mousedown", down);
-        el.addEventListener("mouseup", up);
-        el.addEventListener("mouseleave", up);
-      }
+    // Pasang semua tombol biasa
+    Object.entries(btnMap).forEach(([id, keys]) => wireBtn(id, keys));
 
-      // Pasang semua tombol biasa
-      Object.entries(btnMap).forEach(([id, keys]) => wireBtn(id, keys));
-
-      // Tombol TEMBAK: trigger shoot() sekali per tap + hold untuk rapid fire
-      let shootInterval = null;
-      wireBtn(
-        "btn-shoot",
-        [],
-        () => {
+    // Tombol TEMBAK: trigger shoot() sekali per tap + hold untuk rapid fire
+    let shootInterval = null;
+    wireBtn(
+      "btn-shoot",
+      [],
+      () => {
+        if (typeof shoot === "function") shoot();
+        shootInterval = setInterval(() => {
           if (typeof shoot === "function") shoot();
-          shootInterval = setInterval(() => {
-            if (typeof shoot === "function") shoot();
-          }, 120);
-        },
-        () => {
-          clearInterval(shootInterval);
-          shootInterval = null;
-        },
-      );
+        }, 120);
+      },
+      () => {
+        clearInterval(shootInterval);
+        shootInterval = null;
+        // Hentikan suara tembakan saat tombol dilepas
+        if (typeof stopShotSfx === "function") stopShotSfx();
+      },
+    );
 
-      // Jika menu masih tampil, tap sembarang tombol kontrol akan mulai game
-      document.getElementById("controls").addEventListener(
-        "touchstart",
-        () => {
-          if (typeof gamePhase !== "undefined" && gamePhase === "menu") {
-            if (typeof startGame === "function") startGame();
-          }
-        },
-        { passive: true },
-      );
+    // Jika menu masih tampil, tap sembarang tombol kontrol akan mulai game
+    document.getElementById("controls").addEventListener(
+      "touchstart",
+      () => {
+        if (typeof gamePhase !== "undefined" && gamePhase === "menu") {
+          // Jangan langsung startGame — biarkan handleCanvasTap menangani
+        }
+      },
+      { passive: true },
+    );
 
-      // Tap canvas: handle semua phase game (menu, levelComplete, gameover, win)
-      function handleCanvasTap(evt) {
-        if (typeof gamePhase === "undefined") return;
-        if (gamePhase === "menu") {
-          // Deteksi tap di area tombol menu
-          if (menuShowHelp) {
-            menuShowHelp = false;
-            return;
+    // === MOUSE HOVER: cursor pointer di atas tombol menu ===
+    document.getElementById("c").addEventListener("mousemove", function (evt) {
+      if (typeof gamePhase === "undefined" || gamePhase !== "menu") {
+        this.style.cursor = "default";
+        return;
+      }
+      const rect = this.getBoundingClientRect();
+      const scaleY = 400 / rect.height;
+      const cy = (evt.clientY - rect.top) * scaleY;
+      const inBtn = (cy >= 221 && cy <= 377);
+      this.style.cursor = inBtn ? "pointer" : "default";
+    });
+    document.getElementById("c").addEventListener("mouseleave", function () {
+      this.style.cursor = "default";
+    });
+
+    // Tap canvas: handle semua phase game (menu, levelComplete, gameover, win)
+    function handleCanvasTap(evt) {
+      if (typeof gamePhase === "undefined") return;
+      if (gamePhase === "menu") {
+        if (menuShowSettings) { menuShowSettings = false; return; }
+        if (menuShowHelp) { menuShowHelp = false; return; }
+
+        const rect = C.getBoundingClientRect();
+        const scX = 800 / rect.width;
+        const scY = 400 / rect.height;
+        const clX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        const cx = (clX - rect.left) * scX;
+        const cy = (clY - rect.top) * scY;
+
+        // Jika selector map terbuka
+        if (menuShowStageSelect) {
+          // Area Map 1: 100-280, 2: 310-490, 3: 520-700. Y: 140-260
+          if (cy >= 140 && cy <= 260) {
+            if (cx >= 100 && cx <= 280) { resetLevel(1); menuShowStageSelect = false; }
+            else if (cx >= 310 && cx <= 490) { resetLevel(2); menuShowStageSelect = false; }
+            else if (cx >= 520 && cx <= 700) { resetLevel(3); menuShowStageSelect = false; }
+          } else {
+            menuShowStageSelect = false;
           }
-          // Koordinat tap relatif ke canvas
-          const rect = C.getBoundingClientRect();
-          const scaleX = 800 / rect.width;
-          const scaleY = 400 / rect.height;
-          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-          const cx = (clientX - rect.left) * scaleX;
-          const cy = (clientY - rect.top) * scaleY;
-          // Area tombol PLAY (y: 230-280) dan HOW TO PLAY (y: 295-335)
-          if (cy >= 225 && cy <= 280) {
-            menuSelected = 0;
-            startGame();
-          } else if (cy >= 290 && cy <= 340) {
-            menuSelected = 1;
-            menuShowHelp = true;
+          return;
+        }
+
+        // Area Tombol (btnGap=52)
+        if (!gameCleared) {
+          if (cy >= 220 && cy <= 264) activateMenuItem(0);
+          else if (cy >= 272 && cy <= 316) activateMenuItem(1);
+          else if (cy >= 324 && cy <= 368) activateMenuItem(2);
+        } else {
+          // Layout 4 tombol (StartY=170)
+          if (cy >= 170 && cy <= 214) activateMenuItem(0);
+          else if (cy >= 222 && cy <= 266) activateMenuItem(1);
+          else if (cy >= 274 && cy <= 318) activateMenuItem(2);
+          else if (cy >= 326 && cy <= 370) activateMenuItem(3);
+        }
+      } else if (gamePhase === "playing" || gamePhase === "levelComplete") {
+        // Deteksi klik di tombol ⚙ HUD (pojok kanan atas: x:756-794, y:6-44)
+        const rect2 = C.getBoundingClientRect();
+        const scaleX2 = 800 / rect2.width;
+        const scaleY2 = 400 / rect2.height;
+        const cx2 = ((evt.touches ? evt.touches[0].clientX : evt.clientX) - rect2.left) * scaleX2;
+        const cy2 = ((evt.touches ? evt.touches[0].clientY : evt.clientY) - rect2.top) * scaleY2;
+
+        if (cx2 >= 756 && cx2 <= 794 && cy2 >= 6 && cy2 <= 44) {
+          // Toggle pause
+          gamePaused = !gamePaused;
+          return;
+        }
+
+        if (gamePaused) {
+          // px=240, py=90, pw=320, ph=220
+          const px = 240, py = 90, pw = 320;
+          // Tombol Lanjutkan: pBtnY[0]=py+100=190, tinggi 40
+          if (cx2 >= px + 20 && cx2 <= px + pw - 20 && cy2 >= py + 78 && cy2 <= py + 118) {
+            gamePaused = false;
           }
-        } else if (gamePhase === "levelComplete") {
+          // Tombol Kembali: pBtnY[1]=py+160=250, tinggi 40
+          else if (cx2 >= px + 20 && cx2 <= px + pw - 20 && cy2 >= py + 138 && cy2 <= py + 178) {
+            gamePaused = false;
+            gamePhase = "menu";
+            menuFade = 0; menuFadeOut = 0; menuFadingOut = false; menuSelected = 0;
+          }
+          return;
+        }
+
+        if (gamePhase === "levelComplete") {
           if (typeof currentLevel !== "undefined" && currentLevel < 3) {
             transitionNextLevel = currentLevel + 1;
             gamePhase = "transition";
@@ -357,805 +415,931 @@
           } else if (typeof currentLevel !== "undefined" && currentLevel >= 3) {
             gamePhase = "win";
           }
-        } else if (gamePhase === "gameover") {
-          if (typeof resetLevel === "function") resetLevel(currentLevel);
-        } else if (gamePhase === "win") {
-          currentLevel = 1;
-          if (typeof startGame === "function") startGame();
         }
+      } else if (gamePhase === "levelComplete") {
+        if (typeof currentLevel !== "undefined" && currentLevel < 3) {
+          transitionNextLevel = currentLevel + 1;
+          gamePhase = "transition";
+          transitionTimer = 0;
+        } else if (typeof currentLevel !== "undefined" && currentLevel >= 3) {
+          gamePhase = "win";
+        }
+      } else if (gamePhase === "gameover") {
+        if (typeof resetLevel === "function") resetLevel(currentLevel);
+      } else if (gamePhase === "win") {
+        currentLevel = 1;
+        if (typeof startGame === "function") startGame();
       }
-      document
-        .getElementById("c")
-        .addEventListener("touchstart", handleCanvasTap, { passive: true });
-      document.getElementById("c").addEventListener("click", handleCanvasTap);
+    }
+    document
+      .getElementById("c")
+      .addEventListener("touchstart", handleCanvasTap, { passive: true });
+    document.getElementById("c").addEventListener("click", handleCanvasTap);
 
-      const C = document.getElementById("c");
-      const X = C.getContext("2d");
+    const C = document.getElementById("c");
+    const X = C.getContext("2d");
 
-      // === LEVEL CONFIG ===
-      const LEVEL_CFG = {
-        1: {
-          bg: "bg1",
-          maxEnemies: 10,
-          spawnInterval: 2.5,
-          maxOnScreen: 3,
-          enemyHp: 3,
-          enemySpd: [70, 110],
-          enemyBulletSpd: 300,
-          aimTime: [0.8, 1.2],
-          jln: ["jln1", "jln2", "jln3", "jln4"],
-          lari: ["lari1", "lari2", "lari3", "lari4"],
-          loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
-          jongkok: ["jongkok1", "jongkok2", "jongkok3", "jongkok4"],
-          nembak: ["nembak1", "nembak2", "nembak3"],
-          nembakjongkok: ["nembakjongkok1", "nembakjongkok2", "nembakjongkok3"],
-          nembak4: "nembak4",
-          nembakjongkok4: "nembakjongkok4",
-          mati: "mati",
-          musuhJln: ["musuh_jln1", "musuh_jln2", "musuh_jln3"],
-          musuhAim: "musuh_aim",
-          musuhFire: "musuh_fire",
-          musuhJongkokAim: "musuh_jongkok_aim",
-          musuhJongkokFire: "musuh_jongkok_fire",
-          label: "LEVEL 1 COMPLETE!",
-          timeLimit: 120, // 2 menit untuk 10 musuh
-        },
-        2: {
-          bg: "bg2",
-          maxEnemies: 15,
-          spawnInterval: 2.0,
-          maxOnScreen: 4,
-          enemyHp: 5,
-          enemySpd: [90, 150],
-          enemyBulletSpd: 380,
-          aimTime: [0.6, 1.0],
-          jln: ["jln1", "jln2", "jln3", "jln4"], // pakai walk level 1
-          lari: ["lari1", "lari2", "lari3", "lari4"],
-          loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
-          jongkok: ["l2jongkok1", "l2jongkok2", "l2jongkok3", "l2jongkok3"],
-          nembak: ["l2nembak1", "l2nembak2", "l2nembak3"],
-          nembakjongkok: [
-            "l2nembakjongkok1",
-            "l2nembakjongkok2",
-            "l2nembakjongkok3",
-          ],
-          nembak4: "l2nembak3",
-          nembakjongkok4: "l2nembakjongkok3",
-          mati: "mati",
-          musuhJln: [
-            "l2musuh_jln1",
-            "l2musuh_jln2",
-            "l2musuh_jln3",
-            "l2musuh_jln4",
-          ],
-          musuhAim: "l2musuh_aim",
-          musuhFire: "l2musuh_fire",
-          musuhJongkokAim: "l2musuh_jongkok_aim",
-          musuhJongkokFire: "l2musuh_jongkok_fire",
-          label: "LEVEL 2 COMPLETE!",
-          timeLimit: 120, // naik dari 90 → 120 detik
-        },
-        3: {
-          bg: "bg3",
-          maxEnemies: 1, // 1 boss
-          spawnInterval: 1.0,
-          maxOnScreen: 1,
-          enemyHp: 30, // boss HP tinggi
-          enemySpd: [40, 60], // boss lebih lambat
-          enemyBulletSpd: 450, // tapi peluru lebih cepat
-          aimTime: [0.4, 0.7], // aim lebih cepat
-          isBoss: true,
-          jln: ["jln1", "jln2", "jln3", "jln4"],
-          lari: ["lari1", "lari2", "lari3", "lari4"],
-          loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
-          jongkok: ["l3jongkok1"],
-          nembak: ["l3nembak1"],
-          nembakjongkok: ["l3nembakjongkok1"],
-          nembak4: "l3nembak1",
-          nembakjongkok4: "l3nembakjongkok1",
-          mati: "mati",
-          musuhJln: ["boss_jln1", "boss_jln2", "boss_jln3", "boss_jln4"],
-          musuhAim: "boss_jln1",
-          musuhFire: "boss_jln2",
-          musuhJongkokAim: "boss_jln3",
-          musuhJongkokFire: "boss_jln4",
-          label: "BOSS DEFEATED! YOU WIN!",
-          timeLimit: 120,
-        },
+    // === LEVEL CONFIG ===
+    const LEVEL_CFG = {
+      1: {
+        bg: "bg1",
+        maxEnemies: 10,
+        spawnInterval: 2.5,
+        maxOnScreen: 3,
+        enemyHp: 3,
+        enemySpd: [70, 110],
+        enemyBulletSpd: 300,
+        aimTime: [0.8, 1.2],
+        jln: ["jln1", "jln2", "jln3", "jln4"],
+        lari: ["lari1", "lari2", "lari3", "lari4"],
+        loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
+        jongkok: ["jongkok1", "jongkok2", "jongkok3", "jongkok4"],
+        nembak: ["nembak1", "nembak2", "nembak3"],
+        nembakjongkok: ["nembakjongkok1", "nembakjongkok2", "nembakjongkok3"],
+        nembak4: "nembak4",
+        nembakjongkok4: "nembakjongkok4",
+        mati: "mati",
+        musuhJln: ["musuh_jln1", "musuh_jln2", "musuh_jln3"],
+        musuhAim: "musuh_aim",
+        musuhFire: "musuh_fire",
+        musuhJongkokAim: "musuh_jongkok_aim",
+        musuhJongkokFire: "musuh_jongkok_fire",
+        label: "LEVEL 1 COMPLETE!",
+        timeLimit: 120, // 2 menit untuk 10 musuh
+      },
+      2: {
+        bg: "bg2",
+        maxEnemies: 15,
+        spawnInterval: 2.0,
+        maxOnScreen: 4,
+        enemyHp: 5,
+        enemySpd: [90, 150],
+        enemyBulletSpd: 380,
+        aimTime: [0.6, 1.0],
+        jln: ["jln1", "jln2", "jln3", "jln4"], // pakai walk level 1
+        lari: ["lari1", "lari2", "lari3", "lari4"],
+        loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
+        jongkok: ["l2jongkok1", "l2jongkok2", "l2jongkok3", "l2jongkok3"],
+        nembak: ["l2nembak1", "l2nembak2", "l2nembak3"],
+        nembakjongkok: [
+          "l2nembakjongkok1",
+          "l2nembakjongkok2",
+          "l2nembakjongkok3",
+        ],
+        nembak4: "l2nembak3",
+        nembakjongkok4: "l2nembakjongkok3",
+        mati: "mati",
+        musuhJln: [
+          "l2musuh_jln1",
+          "l2musuh_jln2",
+          "l2musuh_jln3",
+          "l2musuh_jln4",
+        ],
+        musuhAim: "l2musuh_aim",
+        musuhFire: "l2musuh_fire",
+        musuhJongkokAim: "l2musuh_jongkok_aim",
+        musuhJongkokFire: "l2musuh_jongkok_fire",
+        label: "LEVEL 2 COMPLETE!",
+        timeLimit: 120, // naik dari 90 → 120 detik
+      },
+      3: {
+        bg: "bg3",
+        maxEnemies: 1, // 1 boss
+        spawnInterval: 1.0,
+        maxOnScreen: 1,
+        enemyHp: 30, // boss HP tinggi
+        enemySpd: [40, 60], // boss lebih lambat
+        enemyBulletSpd: 450, // tapi peluru lebih cepat
+        aimTime: [0.4, 0.7], // aim lebih cepat
+        isBoss: true,
+        jln: ["jln1", "jln2", "jln3", "jln4"],
+        lari: ["lari1", "lari2", "lari3", "lari4"],
+        loncat: ["loncat1", "loncat2", "loncat3", "loncat4"],
+        jongkok: ["l3jongkok1"],
+        nembak: ["l3nembak1"],
+        nembakjongkok: ["l3nembakjongkok1"],
+        nembak4: "l3nembak1",
+        nembakjongkok4: "l3nembakjongkok1",
+        mati: "mati",
+        musuhJln: ["boss_jln1", "boss_jln2", "boss_jln3", "boss_jln4"],
+        musuhAim: "boss_jln1",
+        musuhFire: "boss_jln2",
+        musuhJongkokAim: "boss_jln3",
+        musuhJongkokFire: "boss_jln4",
+        label: "BOSS DEFEATED! YOU WIN!",
+        timeLimit: 120,
+      },
+    };
+
+    // === ASSET LOADING ===
+    const IMGS = {};
+    function loadImg(key, src) {
+      const img = new Image();
+      img.onload = () => {
+        IMGS[key] = img;
       };
-
-      // === ASSET LOADING ===
-      const IMGS = {};
-      function loadImg(key, src) {
-        const img = new Image();
-        img.onload = () => {
-          IMGS[key] = img;
-        };
-        img.onerror = () => {
-          console.warn("Gagal load: " + src);
-        };
-        img.src = src;
-      }
-
-      // Level 1 karakter
-      loadImg("jln1", "asset_karakterjalan/jln1.png");
-      loadImg("jln2", "asset_karakterjalan/jln2.png");
-      loadImg("jln3", "asset_karakterjalan/jln3.png");
-      loadImg("jln4", "asset_karakterjalan/jln4.png");
-      loadImg("lari1", "asset_karakterlari/lari1 (2).png");
-      loadImg("lari2", "asset_karakterlari/lari2 (2).png");
-      loadImg("lari3", "asset_karakterlari/Lari3.png");
-      loadImg("lari4", "asset_karakterlari/Lari4.png");
-      loadImg("loncat1", "asset_karakterloncat/loncat1.png");
-      loadImg("loncat2", "asset_karakterloncat/loncat 2.png");
-      loadImg("loncat3", "asset_karakterloncat/loncat3.png");
-      loadImg("loncat4", "asset_karakterloncat/loncat4.png");
-      loadImg("jongkok1", "asset_karakterjongkok/jongkok1.png");
-      loadImg("jongkok2", "asset_karakterjongkok/jongkok2.png");
-      loadImg("jongkok3", "asset_karakterjongkok/jongkok3.png");
-      loadImg("jongkok4", "asset_karakterjongkok/jongkok4.png");
-      loadImg("mati", "asset_karaktermati/mati.png");
-      loadImg("nembak1", "asset_karakternembak/nembak1.png");
-      loadImg("nembak2", "asset_karakternembak/nembak2.png");
-      loadImg("nembak3", "asset_karakternembak/nembak3.png");
-      loadImg("nembak4", "asset_karakternembak/nembak4.png");
-      loadImg("nembakjongkok1", "asset_nembakjongkok/nembakjongkok1.png");
-      loadImg("nembakjongkok2", "asset_nembakjongkok/nembakjongkok2.png");
-      loadImg("nembakjongkok3", "asset_nembakjongkok/nembakjongkok3.png");
-      loadImg("nembakjongkok4", "asset_nembakjongkok/nembakjongkok4.png");
-
-      // Level 2 karakter
-      loadImg("l2jln1", "asset_karakterlvel2jalan/assetjlanlevel2(1).png");
-      loadImg("l2jln2", "asset_karakterlvel2jalan/assetjlanlevel2(2).png");
-      loadImg("l2jln3", "asset_karakterlvel2jalan/assetjlanlevel2(3).png");
-      loadImg(
-        "l2jongkok1",
-        "asset_karakterjongkoklevel2/assetjongkoklevel2(1).png",
-      );
-      loadImg(
-        "l2jongkok2",
-        "asset_karakterjongkoklevel2/assetjongkoklevel2(2).png",
-      );
-      loadImg(
-        "l2jongkok3",
-        "asset_karakterjongkoklevel2/assetjongkoklevel2(3).png",
-      );
-      loadImg(
-        "l2nembak1",
-        "asset_karakternembaklevel2/assetnembaklevel2(1).png",
-      );
-      loadImg(
-        "l2nembak2",
-        "asset_karakternembaklevel2/assetnembaklevel2(2).png",
-      );
-      loadImg(
-        "l2nembak3",
-        "asset_karakternembaklevel2/assetnembaklevel2(3).png",
-      );
-      loadImg(
-        "l2nembakjongkok1",
-        "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(1).png",
-      );
-      loadImg(
-        "l2nembakjongkok2",
-        "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(2).png",
-      );
-      loadImg(
-        "l2nembakjongkok3",
-        "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(3).png",
-      );
-
-      // Background
-      loadImg("bg1", "asset_BG/bglevel1.png");
-      loadImg("bg2", "asset_BG/bglvel2.png");
-      loadImg(
-        "bgmenu",
-        "asset_bgmainmenu/ChatGPT Image Jun 27, 2026, 02_10_32 PM.png",
-      );
-
-      // Musuh Level 1
-      loadImg("musuh_aim", "asset_musuhlevel1/musuhlevel1(1).png");
-      loadImg("musuh_fire", "asset_musuhlevel1/musuhlevel1(2).png");
-      loadImg("musuh_jln1", "asset_musuhlevel1/musuhlevel1(3).png");
-      loadImg("musuh_jln2", "asset_musuhlevel1/musuhlevel1(4).png");
-      loadImg("musuh_jln3", "asset_musuhlevel1/musuhlevel1(5).png");
-      loadImg(
-        "musuh_jongkok_aim",
-        "asset_musuhlevel1jongkok/musuhlevel1jongkok(1).png",
-      );
-      loadImg(
-        "musuh_jongkok_fire",
-        "asset_musuhlevel1jongkok/musuhlevel1jongkok(2).png",
-      );
-
-      // Musuh Level 2
-      loadImg(
-        "l2musuh_jln1",
-        "asset_musuhlevel2jalan/assetmusuhjalanlevel2(1).png",
-      );
-      loadImg(
-        "l2musuh_jln2",
-        "asset_musuhlevel2jalan/assetmusuhjalanlevel2(2).png",
-      );
-      loadImg(
-        "l2musuh_jln3",
-        "asset_musuhlevel2jalan/assetmusuhjalanlevel2(3).png",
-      );
-      loadImg(
-        "l2musuh_jln4",
-        "asset_musuhlevel2jalan/assetmusuhjalanlevel2(4).png",
-      );
-      loadImg(
-        "l2musuh_aim",
-        "asset_musuhnembaklevel2/assetmusuhnembaklevel2(1).png",
-      );
-      loadImg(
-        "l2musuh_fire",
-        "asset_musuhnembaklevel2/assetmusuhnembaklevel2(2).png",
-      );
-      loadImg(
-        "l2musuh_jongkok_aim",
-        "asset_musuhnembakjongkoklevel2/assetmusuhnembakjongkoklevel2(1).png",
-      );
-      loadImg(
-        "l2musuh_jongkok_fire",
-        "asset_musuhnembakjongkoklevel2/assetmusuhnembakjongkoklevel2(2).png",
-      );
-
-      // Level 3 karakter
-      loadImg(
-        "l3jongkok1",
-        "asset_karakterlevel3/assetjongkokflarelevel2(2).png",
-      );
-      loadImg(
-        "l3nembak1",
-        "asset_karakterlevel3/assetnembakflarelevel2(1).png",
-      );
-      loadImg(
-        "l3nembakjongkok1",
-        "asset_karakterlevel3/assetjongkoknembakflarelevel2(1).png",
-      );
-
-      // Boss Level 3
-      loadImg(
-        "boss_jln1",
-        "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(1).png",
-      );
-      loadImg(
-        "boss_jln2",
-        "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(2).png",
-      );
-      loadImg(
-        "boss_jln3",
-        "asset_musuhbosslevel3/assetmusuhbossjalanlevel2(3).png",
-      );
-      loadImg(
-        "boss_jln4",
-        "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(4).png",
-      );
-
-      // Background level 3
-      loadImg("bg3", "asset_BG/bglevel3.png");
-
-      // === GAME STATE ===
-      let currentLevel = 1;
-      let gamePhase = "menu"; // "menu" | "playing" | "levelComplete" | "transition" | "gameover" | "win"
-      let levelCompleteTimer = 0;
-      let menuPulse = 0;
-      let menuSelected = 0; // 0=PLAY, 1=HOW TO PLAY, item yang dipilih
-      let menuShowHelp = false; // tampilkan layar bantuan
-      let transitionTimer = 0;
-      let transitionNextLevel = 1;
-      let levelTimer = 0; // countdown timer per level
-      let highScore = parseInt(localStorage.getItem("cs_highscore") || "0");
-
-      // === PLAYER ===
-      const P = {
-        x: 200,
-        y: 280,
-        w: 80,
-        h: 100,
-        vx: 0,
-        vy: 0,
-        spd: 200,
-        runSpd: 380,
-        hp: 10,
-        maxHp: 10,
-        gnd: true,
-        fc: 1,
-        fr: 0,
-        ft: 0,
-        fps: 10,
-        running: false,
-        jumping: false,
-        crouching: false,
-        dead: false,
-        deathTimer: 0,
-        shooting: false,
-        shootTimer: 0,
-        shootFr: 0,
-        reloading: false,
-        reloadTimer: 0,
-        ammo: 8,
-        maxAmmo: 8,
-        jf: -550,
-        FL: 320,
-        hitFlash: 0, // timer efek flash saat kena tembak
+      img.onerror = () => {
+        console.warn("Gagal load: " + src);
       };
+      img.src = src;
+    }
 
-      function resetPlayer() {
-        P.x = 200;
-        P.y = P.FL - P.h;
-        P.h = 100;
-        P.vx = 0;
-        P.vy = 0;
-        P.hp = P.maxHp;
-        P.gnd = true;
-        P.fc = 1;
-        P.fr = 0;
-        P.ft = 0;
-        P.running = false;
-        P.jumping = false;
-        P.crouching = false;
-        P.dead = false;
-        P.deathTimer = 0;
-        P.shooting = false;
-        P.shootTimer = 0;
-        P.shootFr = 0;
-        P.reloading = false;
-        P.reloadTimer = 0;
-        P.ammo = P.maxAmmo;
+    // Level 1 karakter
+    loadImg("jln1", "asset_karakterjalan/jln1.png");
+    loadImg("jln2", "asset_karakterjalan/jln2.png");
+    loadImg("jln3", "asset_karakterjalan/jln3.png");
+    loadImg("jln4", "asset_karakterjalan/jln4.png");
+    loadImg("lari1", "asset_karakterlari/lari1 (2).png");
+    loadImg("lari2", "asset_karakterlari/lari2 (2).png");
+    loadImg("lari3", "asset_karakterlari/Lari3.png");
+    loadImg("lari4", "asset_karakterlari/Lari4.png");
+    loadImg("loncat1", "asset_karakterloncat/loncat1.png");
+    loadImg("loncat2", "asset_karakterloncat/loncat 2.png");
+    loadImg("loncat3", "asset_karakterloncat/loncat3.png");
+    loadImg("loncat4", "asset_karakterloncat/loncat4.png");
+    loadImg("jongkok1", "asset_karakterjongkok/jongkok1.png");
+    loadImg("jongkok2", "asset_karakterjongkok/jongkok2.png");
+    loadImg("jongkok3", "asset_karakterjongkok/jongkok3.png");
+    loadImg("jongkok4", "asset_karakterjongkok/jongkok4.png");
+    loadImg("mati", "asset_karaktermati/mati.png");
+    loadImg("nembak1", "asset_karakternembak/nembak1.png");
+    loadImg("nembak2", "asset_karakternembak/nembak2.png");
+    loadImg("nembak3", "asset_karakternembak/nembak3.png");
+    loadImg("nembak4", "asset_karakternembak/nembak4.png");
+    loadImg("nembakjongkok1", "asset_nembakjongkok/nembakjongkok1.png");
+    loadImg("nembakjongkok2", "asset_nembakjongkok/nembakjongkok2.png");
+    loadImg("nembakjongkok3", "asset_nembakjongkok/nembakjongkok3.png");
+    loadImg("nembakjongkok4", "asset_nembakjongkok/nembakjongkok4.png");
+
+    // Level 2 karakter
+    loadImg("l2jln1", "asset_karakterlvel2jalan/assetjlanlevel2(1).png");
+    loadImg("l2jln2", "asset_karakterlvel2jalan/assetjlanlevel2(2).png");
+    loadImg("l2jln3", "asset_karakterlvel2jalan/assetjlanlevel2(3).png");
+    loadImg(
+      "l2jongkok1",
+      "asset_karakterjongkoklevel2/assetjongkoklevel2(1).png",
+    );
+    loadImg(
+      "l2jongkok2",
+      "asset_karakterjongkoklevel2/assetjongkoklevel2(2).png",
+    );
+    loadImg(
+      "l2jongkok3",
+      "asset_karakterjongkoklevel2/assetjongkoklevel2(3).png",
+    );
+    loadImg(
+      "l2nembak1",
+      "asset_karakternembaklevel2/assetnembaklevel2(1).png",
+    );
+    loadImg(
+      "l2nembak2",
+      "asset_karakternembaklevel2/assetnembaklevel2(2).png",
+    );
+    loadImg(
+      "l2nembak3",
+      "asset_karakternembaklevel2/assetnembaklevel2(3).png",
+    );
+    loadImg(
+      "l2nembakjongkok1",
+      "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(1).png",
+    );
+    loadImg(
+      "l2nembakjongkok2",
+      "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(2).png",
+    );
+    loadImg(
+      "l2nembakjongkok3",
+      "asset_karakternembakjongkoklevel2/assetjongkoknembaklevel2(3).png",
+    );
+
+    // Background
+    loadImg("bg1", "asset_BG/bglevel1.png");
+    loadImg("bg2", "asset_BG/bglvel2.png");
+    loadImg(
+      "bgmenu",
+      "asset_bgmainmenu/ChatGPT Image Jun 27, 2026, 02_35_36 PM.png",
+    );
+
+    function drawMenuOverlay(title, lines) {
+      X.fillStyle = "rgba(0,0,0,0.85)";
+      X.fillRect(60, 40, 680, 320);
+      X.strokeStyle = "#ff8800";
+      X.lineWidth = 2;
+      X.strokeRect(60, 40, 680, 320);
+
+      X.fillStyle = "#ff8800";
+      X.font = "bold 24px 'Orbitron', monospace";
+      X.textAlign = "center";
+      X.fillText(title, 400, 90);
+
+      X.fillStyle = "#ffffff";
+      X.font = "14px monospace";
+      lines.forEach((txt, i) => {
+        X.fillText(txt, 400, 150 + i * 30);
+      });
+      X.textAlign = "left";
+    }
+
+    // === UTILS ===
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      if (typeof radius === "undefined") radius = 5;
+      if (typeof radius === "number") radius = { tl: radius, tr: radius, br: radius, bl: radius };
+      else {
+        let defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
+        for (let side in defaultRadius) radius[side] = radius[side] || defaultRadius[side];
       }
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
 
-      // === PARALLAX ===
-      let cameraX = 0;
-      const WORLD_WIDTH = 3000;
+    // === AUDIO MENU ===
+    // Siapkan audio dengan graceful fallback jika file belum ada
+    function makeAudio(src, loop) {
+      const a = new Audio();
+      a.preload = "auto";
+      a.src = src;
+      if (loop) a.loop = true;
+      a.onerror = (err) => { console.error("Audio Load Error: " + src, err); };
+      return a;
+    }
+    const menuMusic = makeAudio("music_mainmenu/leberch-dark-cinematic-509801.mp3", true);
+    menuMusic.volume = 0.5; // volume 50%
+    const clickSfx = makeAudio("asset_audio/click.wav", false);
 
-      // === PARTICLES ===
-      let particles = [];
-      function spawnBlood(x, y) {
-        for (let i = 0; i < 25; i++) {
-          particles.push({
-            x,
-            y,
-            vx: (Math.random() - 0.5) * 350,
-            vy: -(Math.random() * 250 + 50),
-            life: 1,
-            col: Math.random() > 0.5 ? "#cc0000" : "#880000",
-            sz: 3 + Math.random() * 5,
-          });
-        }
+    // === SOUND EFFECT SENJATA ===
+    const sfxPistol = makeAudio("suara_tembakanpistol/u_f09vejvoga-gun-shot-350315.mp3", false);
+    sfxPistol.volume = 0.7;
+    const sfxMesin = makeAudio("suara_tembakanmesin/foisal72-gun-fire-346766.mp3", false);
+    sfxMesin.volume = 0.55;
+    const sfxReload = makeAudio("suara_reloadsenjata/dragon-studio-gun-reload-2-511308.mp3", false);
+    sfxReload.volume = 0.8;
+
+    // Throttle: cegah spam suara dengan cooldown minimum
+    let lastShotSfxTime = 0;
+    const PISTOL_COOLDOWN = 280; // ms
+    const MESIN_COOLDOWN = 130;  // ms
+
+    function stopShotSfx() {
+      if (typeof sfxPistol !== "undefined") { sfxPistol.pause(); sfxPistol.currentTime = 0; }
+      if (typeof sfxMesin !== "undefined") { sfxMesin.pause(); sfxMesin.currentTime = 0; }
+    }
+
+    function playShotSfx() {
+      if (typeof gamePhase === "undefined" || gamePhase !== "playing" || gamePaused) return;
+      const now = Date.now();
+      if (currentLevel === 1) {
+        if (now - lastShotSfxTime < PISTOL_COOLDOWN) return;
+        lastShotSfxTime = now;
+        sfxPistol.pause();
+        sfxPistol.currentTime = 0;
+        sfxPistol.play().catch(e => { });
+      } else {
+        if (now - lastShotSfxTime < MESIN_COOLDOWN) return;
+        lastShotSfxTime = now;
+        sfxMesin.pause();
+        sfxMesin.currentTime = 0;
+        sfxMesin.play().catch(e => { });
       }
+    }
 
-      // === BULLETS ===
-      let bullets = [];
-      let enemyBullets = [];
+    function playReloadSfx() {
+      if (typeof gamePhase === "undefined" || gamePhase !== "playing" || gamePaused) return;
+      sfxReload.currentTime = 0;
+      sfxReload.play().catch(() => { });
+    }
 
-      function shoot() {
-        if (P.dead || P.reloading) return;
-        if (P.ammo <= 0) {
-          startReload();
-          return;
-        }
-        const bx = P.fc > 0 ? P.x + P.w : P.x;
-        const by = P.crouching ? P.y + P.h * 0.4 : P.y + P.h * 0.35;
-        bullets.push({ x: bx, y: by, vx: P.fc * 600, life: 1.5 });
-        P.ammo--;
-        P.shooting = true;
-        P.shootTimer = 0;
-        P.shootFr = 0;
-      }
+    // Musuh Level 1
+    loadImg("musuh_aim", "asset_musuhlevel1/musuhlevel1(1).png");
+    loadImg("musuh_fire", "asset_musuhlevel1/musuhlevel1(2).png");
+    loadImg("musuh_jln1", "asset_musuhlevel1/musuhlevel1(3).png");
+    loadImg("musuh_jln2", "asset_musuhlevel1/musuhlevel1(4).png");
+    loadImg("musuh_jln3", "asset_musuhlevel1/musuhlevel1(5).png");
+    loadImg(
+      "musuh_jongkok_aim",
+      "asset_musuhlevel1jongkok/musuhlevel1jongkok(1).png",
+    );
+    loadImg(
+      "musuh_jongkok_fire",
+      "asset_musuhlevel1jongkok/musuhlevel1jongkok(2).png",
+    );
 
-      function startReload() {
-        if (P.reloading || P.dead) return;
-        P.reloading = true;
-        P.reloadTimer = 0;
-        P.shooting = false;
-      }
+    // Musuh Level 2
+    loadImg(
+      "l2musuh_jln1",
+      "asset_musuhlevel2jalan/assetmusuhjalanlevel2(1).png",
+    );
+    loadImg(
+      "l2musuh_jln2",
+      "asset_musuhlevel2jalan/assetmusuhjalanlevel2(2).png",
+    );
+    loadImg(
+      "l2musuh_jln3",
+      "asset_musuhlevel2jalan/assetmusuhjalanlevel2(3).png",
+    );
+    loadImg(
+      "l2musuh_jln4",
+      "asset_musuhlevel2jalan/assetmusuhjalanlevel2(4).png",
+    );
+    loadImg(
+      "l2musuh_aim",
+      "asset_musuhnembaklevel2/assetmusuhnembaklevel2(1).png",
+    );
+    loadImg(
+      "l2musuh_fire",
+      "asset_musuhnembaklevel2/assetmusuhnembaklevel2(2).png",
+    );
+    loadImg(
+      "l2musuh_jongkok_aim",
+      "asset_musuhnembakjongkoklevel2/assetmusuhnembakjongkoklevel2(1).png",
+    );
+    loadImg(
+      "l2musuh_jongkok_fire",
+      "asset_musuhnembakjongkoklevel2/assetmusuhnembakjongkoklevel2(2).png",
+    );
 
-      // === ENEMIES ===
-      let enemies = [];
-      let score = 0;
-      let spawnTimer = 0;
-      let totalSpawned = 0;
+    // Level 3 karakter
+    loadImg(
+      "l3jongkok1",
+      "asset_karakterlevel3/assetjongkokflarelevel2(2).png",
+    );
+    loadImg(
+      "l3nembak1",
+      "asset_karakterlevel3/assetnembakflarelevel2(1).png",
+    );
+    loadImg(
+      "l3nembakjongkok1",
+      "asset_karakterlevel3/assetjongkoknembakflarelevel2(1).png",
+    );
 
-      function spawnEnemy() {
-        const cfg = LEVEL_CFG[currentLevel];
-        const spd =
-          cfg.enemySpd[0] + Math.random() * (cfg.enemySpd[1] - cfg.enemySpd[0]);
-        const aimT =
-          cfg.aimTime[0] + Math.random() * (cfg.aimTime[1] - cfg.aimTime[0]);
-        // Boss level 3 lebih besar
-        const isBoss = !!cfg.isBoss;
-        const eW = isBoss ? 130 : 70;
-        const eH = isBoss ? 160 : 90;
-        enemies.push({
-          x: P.x + 500 + Math.random() * 200,
-          y: P.FL - eH,
-          w: eW,
-          h: eH,
-          hp: cfg.enemyHp,
-          fc: -1,
-          spd,
-          state: "walk",
-          timer: 0,
-          walkFr: 0,
-          walkFt: 0,
-          crouching: false,
-          aimTime: aimT,
-          fireTime: isBoss ? 0.15 : 0.3, // boss tembak lebih sering
-          dead: false,
-          deadTimer: 0,
-          isBoss,
+    // Boss Level 3
+    loadImg(
+      "boss_jln1",
+      "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(1).png",
+    );
+    loadImg(
+      "boss_jln2",
+      "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(2).png",
+    );
+    loadImg(
+      "boss_jln3",
+      "asset_musuhbosslevel3/assetmusuhbossjalanlevel2(3).png",
+    );
+    loadImg(
+      "boss_jln4",
+      "asset_musuhbosslevel3/assetmusuhjalanbosslevel2(4).png",
+    );
+
+    // Background level 3
+    loadImg("bg3", "asset_BG/bglevel3.png");
+
+    // === GAME STATE ===
+    let currentLevel = 1;
+    let gamePhase = "menu"; // "menu" | "playing" | "levelComplete" | "transition" | "gameover" | "win"
+    let levelCompleteTimer = 0;
+    let menuPulse = 0;
+    let menuSelected = 0; // 0=PLAY, 1=SETTING, 2=EXIT
+    let menuShowHelp = false;
+    let menuShowSettings = false;
+    let menuFade = 0; // 0=transparan, 1=penuh (fade in saat buka)
+    let menuFadeOut = 0; // fade out saat PLAY ditekan
+    let menuFadingOut = false;
+    let menuBtnScale = [1, 1, 1]; // skala tiap tombol (hover effect)
+    let gamePaused = false;        // true saat game di-pause
+    let pauseSelected = 0;         // 0=Lanjutkan, 1=Kembali ke Menu
+    let transitionTimer = 0;
+    let transitionNextLevel = 1;
+    let levelTimer = 0; // countdown timer per level
+    let highScore = parseInt(localStorage.getItem("cs_highscore") || "0");
+    let gameCleared = localStorage.getItem("cs_game_cleared") === "true"; // sudah tamat?
+    let menuShowStageSelect = false; // tampilkan selector map?
+
+    // === PLAYER ===
+    const P = {
+      x: 200,
+      y: 280,
+      w: 80,
+      h: 100,
+      vx: 0,
+      vy: 0,
+      spd: 200,
+      runSpd: 380,
+      hp: 10,
+      maxHp: 10,
+      gnd: true,
+      fc: 1,
+      fr: 0,
+      ft: 0,
+      fps: 10,
+      running: false,
+      jumping: false,
+      crouching: false,
+      dead: false,
+      deathTimer: 0,
+      shooting: false,
+      shootTimer: 0,
+      shootFr: 0,
+      reloading: false,
+      reloadTimer: 0,
+      ammo: 8,
+      maxAmmo: 8,
+      jf: -550,
+      FL: 320,
+      hitFlash: 0, // timer efek flash saat kena tembak
+    };
+
+    function resetPlayer() {
+      P.x = 200;
+      P.y = P.FL - P.h;
+      P.h = 100;
+      P.vx = 0;
+      P.vy = 0;
+      P.hp = P.maxHp;
+      P.gnd = true;
+      P.fc = 1;
+      P.fr = 0;
+      P.ft = 0;
+      P.running = false;
+      P.jumping = false;
+      P.crouching = false;
+      P.dead = false;
+      P.deathTimer = 0;
+      P.shooting = false;
+      P.shootTimer = 0;
+      P.shootFr = 0;
+      P.reloading = false;
+      P.reloadTimer = 0;
+      P.ammo = P.maxAmmo;
+    }
+
+    // === PARALLAX ===
+    let cameraX = 0;
+    const WORLD_WIDTH = 3000;
+
+    // === PARTICLES ===
+    let particles = [];
+    function spawnBlood(x, y) {
+      for (let i = 0; i < 25; i++) {
+        particles.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 350,
+          vy: -(Math.random() * 250 + 50),
+          life: 1,
+          col: Math.random() > 0.5 ? "#cc0000" : "#880000",
+          sz: 3 + Math.random() * 5,
         });
       }
+    }
 
-      function updateEnemies(dt) {
-        const cfg = LEVEL_CFG[currentLevel];
-        const maxScore = cfg.maxEnemies * 10;
+    // === BULLETS ===
+    let bullets = [];
+    let enemyBullets = [];
 
-        if (score >= maxScore) {
-          enemies = [];
-          enemyBullets = [];
-          if (gamePhase === "playing") {
-            gamePhase = "levelComplete";
-            levelCompleteTimer = 0;
-          }
+    function shoot() {
+      if (P.dead || P.reloading) return;
+      if (P.ammo <= 0) {
+        startReload();
+        return;
+      }
+      const bx = P.fc > 0 ? P.x + P.w : P.x;
+      const by = P.crouching ? P.y + P.h * 0.4 : P.y + P.h * 0.35;
+      bullets.push({ x: bx, y: by, vx: P.fc * 600, life: 1.5 });
+      P.ammo--;
+      P.shooting = true;
+      P.shootTimer = 0;
+      P.shootFr = 0;
+      console.log("Shoot input detected");
+      playShotSfx(); // SFX tembakan sesuai level
+    }
+
+    function startReload() {
+      if (P.reloading || P.dead) return;
+      P.reloading = true;
+      P.reloadTimer = 0;
+      P.shooting = false;
+      playReloadSfx(); // SFX reload
+    }
+
+    // === ENEMIES ===
+    let enemies = [];
+    let score = 0;
+    let spawnTimer = 0;
+    let totalSpawned = 0;
+
+    function spawnEnemy() {
+      const cfg = LEVEL_CFG[currentLevel];
+      const spd =
+        cfg.enemySpd[0] + Math.random() * (cfg.enemySpd[1] - cfg.enemySpd[0]);
+      const aimT =
+        cfg.aimTime[0] + Math.random() * (cfg.aimTime[1] - cfg.aimTime[0]);
+      // Boss level 3 lebih besar
+      const isBoss = !!cfg.isBoss;
+      const eW = isBoss ? 130 : 70;
+      const eH = isBoss ? 160 : 90;
+      enemies.push({
+        x: P.x + 500 + Math.random() * 200,
+        y: P.FL - eH,
+        w: eW,
+        h: eH,
+        hp: cfg.enemyHp,
+        fc: -1,
+        spd,
+        state: "walk",
+        timer: 0,
+        walkFr: 0,
+        walkFt: 0,
+        crouching: false,
+        aimTime: aimT,
+        fireTime: isBoss ? 0.15 : 0.3, // boss tembak lebih sering
+        dead: false,
+        deadTimer: 0,
+        isBoss,
+      });
+    }
+
+    function updateEnemies(dt) {
+      const cfg = LEVEL_CFG[currentLevel];
+      const maxScore = cfg.maxEnemies * 10;
+
+      if (score >= maxScore) {
+        enemies = [];
+        enemyBullets = [];
+        if (gamePhase === "playing") {
+          gamePhase = "levelComplete";
+          levelCompleteTimer = 0;
+        }
+        return;
+      }
+
+      spawnTimer += dt;
+      if (
+        spawnTimer >= cfg.spawnInterval &&
+        enemies.length < cfg.maxOnScreen &&
+        totalSpawned < cfg.maxEnemies
+      ) {
+        spawnTimer = 0;
+        spawnEnemy();
+        totalSpawned++;
+      }
+
+      enemies.forEach((e) => {
+        if (e.dead) {
+          e.deadTimer += dt;
           return;
         }
+        e.fc = P.x < e.x ? -1 : 1;
+        const dist = Math.abs(P.x - e.x);
 
-        spawnTimer += dt;
-        if (
-          spawnTimer >= cfg.spawnInterval &&
-          enemies.length < cfg.maxOnScreen &&
-          totalSpawned < cfg.maxEnemies
-        ) {
-          spawnTimer = 0;
-          spawnEnemy();
-          totalSpawned++;
-        }
-
-        enemies.forEach((e) => {
-          if (e.dead) {
-            e.deadTimer += dt;
+        if (e.state === "walk") {
+          e.x += e.fc * e.spd * dt;
+          e.walkFt += dt;
+          if (e.walkFt >= 0.15) {
+            e.walkFt = 0;
+            e.walkFr = (e.walkFr + 1) % cfg.musuhJln.length;
+          }
+          if (dist < 400) {
+            e.state = "aim";
+            e.timer = 0;
+          }
+        } else if (e.state === "aim") {
+          e.timer += dt;
+          if (dist > 500) {
+            e.state = "walk";
+            e.timer = 0;
             return;
           }
-          e.fc = P.x < e.x ? -1 : 1;
-          const dist = Math.abs(P.x - e.x);
+          if (e.timer >= e.aimTime) {
+            e.state = "fire";
+            e.timer = 0;
+            e.crouching = P.crouching;
+            const bx = e.fc > 0 ? e.x + e.w : e.x;
+            const standingChestY = P.FL - 100 * 0.45;
+            const by = e.crouching ? e.y + e.h * 0.6 : standingChestY;
 
-          if (e.state === "walk") {
-            e.x += e.fc * e.spd * dt;
-            e.walkFt += dt;
-            if (e.walkFt >= 0.15) {
-              e.walkFt = 0;
-              e.walkFr = (e.walkFr + 1) % cfg.musuhJln.length;
-            }
-            if (dist < 400) {
-              e.state = "aim";
-              e.timer = 0;
-            }
-          } else if (e.state === "aim") {
-            e.timer += dt;
-            if (dist > 500) {
-              e.state = "walk";
-              e.timer = 0;
-              return;
-            }
-            if (e.timer >= e.aimTime) {
-              e.state = "fire";
-              e.timer = 0;
-              e.crouching = P.crouching;
-              const bx = e.fc > 0 ? e.x + e.w : e.x;
-              const standingChestY = P.FL - 100 * 0.45;
-              const by = e.crouching ? e.y + e.h * 0.6 : standingChestY;
-
-              if (e.isBoss) {
-                // Boss: tembak 3 peluru sekaligus - lurus, sedikit atas, sedikit bawah
-                const speeds = [
-                  cfg.enemyBulletSpd,
-                  cfg.enemyBulletSpd * 0.85,
-                  cfg.enemyBulletSpd * 0.85,
-                ];
-                const offsets = [0, -25, 25];
-                speeds.forEach((spd, i) => {
-                  enemyBullets.push({
-                    x: bx,
-                    y: by + offsets[i],
-                    vx: e.fc * spd,
-                    life: 2.5,
-                  });
-                });
-              } else {
+            if (e.isBoss) {
+              // Boss: tembak 3 peluru sekaligus - lurus, sedikit atas, sedikit bawah
+              const speeds = [
+                cfg.enemyBulletSpd,
+                cfg.enemyBulletSpd * 0.85,
+                cfg.enemyBulletSpd * 0.85,
+              ];
+              const offsets = [0, -25, 25];
+              speeds.forEach((spd, i) => {
                 enemyBullets.push({
                   x: bx,
-                  y: by,
-                  vx: e.fc * cfg.enemyBulletSpd,
-                  crouching: e.crouching,
-                  life: 2,
+                  y: by + offsets[i],
+                  vx: e.fc * spd,
+                  life: 2.5,
                 });
-              }
+              });
+            } else {
+              enemyBullets.push({
+                x: bx,
+                y: by,
+                vx: e.fc * cfg.enemyBulletSpd,
+                crouching: e.crouching,
+                life: 2,
+              });
             }
-          } else if (e.state === "fire") {
-            e.timer += dt;
-            // Boss: tembak terus selama state fire (burst)
-            if (e.isBoss && e.timer >= e.fireTime) {
-              e.timer = 0;
-              if (dist <= 500) {
-                const bx = e.fc > 0 ? e.x + e.w : e.x;
-                const by = P.FL - 100 * 0.45;
-                const offsets = [0, -30, 30];
-                offsets.forEach((off) => {
-                  enemyBullets.push({
-                    x: bx,
-                    y: by + off,
-                    vx: e.fc * cfg.enemyBulletSpd,
-                    life: 2.5,
-                  });
+          }
+        } else if (e.state === "fire") {
+          e.timer += dt;
+          // Boss: tembak terus selama state fire (burst)
+          if (e.isBoss && e.timer >= e.fireTime) {
+            e.timer = 0;
+            if (dist <= 500) {
+              const bx = e.fc > 0 ? e.x + e.w : e.x;
+              const by = P.FL - 100 * 0.45;
+              const offsets = [0, -30, 30];
+              offsets.forEach((off) => {
+                enemyBullets.push({
+                  x: bx,
+                  y: by + off,
+                  vx: e.fc * cfg.enemyBulletSpd,
+                  life: 2.5,
                 });
-              } else {
-                e.state = "walk";
-                e.timer = 0;
-                e.crouching = false;
-              }
-              // Boss kembali aim setelah burst 3x
-              if (!e.burstCount) e.burstCount = 0;
-              e.burstCount++;
-              if (e.burstCount >= 3) {
-                e.burstCount = 0;
-                e.state = "aim";
-                e.timer = 0;
-                e.aimTime =
-                  cfg.aimTime[0] +
-                  Math.random() * (cfg.aimTime[1] - cfg.aimTime[0]);
-              }
-            } else if (!e.isBoss && e.timer >= e.fireTime) {
-              e.state = dist > 500 ? "walk" : "aim";
+              });
+            } else {
+              e.state = "walk";
               e.timer = 0;
               e.crouching = false;
+            }
+            // Boss kembali aim setelah burst 3x
+            if (!e.burstCount) e.burstCount = 0;
+            e.burstCount++;
+            if (e.burstCount >= 3) {
+              e.burstCount = 0;
+              e.state = "aim";
+              e.timer = 0;
               e.aimTime =
                 cfg.aimTime[0] +
                 Math.random() * (cfg.aimTime[1] - cfg.aimTime[0]);
             }
+          } else if (!e.isBoss && e.timer >= e.fireTime) {
+            e.state = dist > 500 ? "walk" : "aim";
+            e.timer = 0;
+            e.crouching = false;
+            e.aimTime =
+              cfg.aimTime[0] +
+              Math.random() * (cfg.aimTime[1] - cfg.aimTime[0]);
           }
-        });
-
-        enemies = enemies.filter((e) => !e.dead || e.deadTimer < 2);
-
-        enemyBullets = enemyBullets.filter((b) => {
-          b.x += b.vx * dt;
-          b.life -= dt;
-          return b.life > 0 && b.x > cameraX - 100 && b.x < cameraX + 900;
-        });
-
-        bullets.forEach((b) => {
-          enemies.forEach((e) => {
-            if (e.dead) return;
-            if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h) {
-              e.hp--;
-              b.life = 0;
-              spawnBlood(e.x + e.w / 2, e.y + e.h / 2);
-              if (e.hp <= 0) {
-                e.dead = true;
-                e.deadTimer = 0;
-                score += 10;
-              }
-            }
-          });
-        });
-
-        if (!P.dead) {
-          enemyBullets.forEach((b) => {
-            // Hitbox player: P.x, P.y, P.w, P.h (P.h=70 saat jongkok, 100 saat berdiri)
-            if (b.x > P.x && b.x < P.x + P.w && b.y > P.y && b.y < P.y + P.h) {
-              P.hp--;
-              b.life = 0;
-              P.hitFlash = 0.35; // aktifkan hit flash
-              spawnBlood(P.x + P.w / 2, P.y + P.h / 2);
-              if (P.hp <= 0) {
-                P.dead = true;
-                P.deathTimer = 0;
-              }
-            }
-          });
-        }
-      }
-
-      // === INPUT ===
-      const K = {};
-      window.addEventListener("keydown", (e) => {
-        K[e.code] = true;
-        // Jangan preventDefault untuk F agar tidak block shortcut lain
-        if (e.code !== "KeyF") e.preventDefault();
-
-        // Toggle fullscreen dengan F
-        if (e.code === "KeyF") {
-          toggleFS();
-          return;
-        }
-
-        // Saat transisi: abaikan semua input
-        if (gamePhase === "transition") return;
-
-        // Menu: navigasi dengan arrow + enter
-        if (gamePhase === "menu") {
-          if (menuShowHelp) {
-            // Tekan apapun untuk kembali dari help
-            menuShowHelp = false;
-            return;
-          }
-          const menuItems = 2; // PLAY, HOW TO PLAY
-          if (e.code === "ArrowUp" || e.code === "KeyW") {
-            menuSelected = (menuSelected - 1 + menuItems) % menuItems;
-          } else if (e.code === "ArrowDown" || e.code === "KeyS") {
-            menuSelected = (menuSelected + 1) % menuItems;
-          } else if (e.code === "Enter" || e.code === "Space") {
-            if (menuSelected === 0) startGame();
-            else if (menuSelected === 1) menuShowHelp = true;
-          }
-          return;
-        }
-
-        // Game Over: tekan R untuk retry dari level yang sama
-        if (gamePhase === "gameover") {
-          if (e.code === "KeyR") resetLevel(currentLevel);
-          return;
-        }
-
-        // Win screen: tekan R untuk main lagi dari awal
-        if (gamePhase === "win") {
-          if (e.code === "KeyR") {
-            currentLevel = 1;
-            startGame();
-          }
-          return;
-        }
-
-        if (e.code === "KeyR") {
-          if (P.dead) {
-            resetLevel(currentLevel);
-          } else if (gamePhase === "levelComplete" && currentLevel >= 3) {
-            if (score > highScore) {
-              highScore = score;
-              localStorage.setItem("cs_highscore", highScore);
-            }
-            gamePhase = "win";
-          } else {
-            startReload();
-          }
-        }
-        if (e.code === "Space") shoot();
-        if (
-          (e.code === "Enter" || e.code === "KeyN") &&
-          gamePhase === "levelComplete" &&
-          currentLevel < 3
-        ) {
-          // Mulai layar transisi ke level berikutnya
-          transitionNextLevel = currentLevel + 1;
-          gamePhase = "transition";
-          transitionTimer = 0;
         }
       });
-      window.addEventListener("keyup", (e) => (K[e.code] = false));
 
-      function startGame() {
-        // Minta fullscreen otomatis saat mulai main
-        const el = document.getElementById("wrapper");
-        if (!document.fullscreenElement && el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        }
-        resetLevel(currentLevel);
-      }
+      enemies = enemies.filter((e) => !e.dead || e.deadTimer < 2);
 
-      function resetLevel(lvl) {
-        currentLevel = lvl;
-        gamePhase = "playing";
-        levelCompleteTimer = 0;
-        score = 0;
-        spawnTimer = 0;
-        totalSpawned = 0;
-        enemies = [];
-        enemyBullets = [];
-        bullets = [];
-        particles = [];
-        levelTimer = 0;
-        resetPlayer();
-        cameraX = 0;
-      }
+      enemyBullets = enemyBullets.filter((b) => {
+        b.x += b.vx * dt;
+        b.life -= dt;
+        return b.life > 0 && b.x > cameraX - 100 && b.x < cameraX + 900;
+      });
 
-      // === UPDATE ===
-      let lt = 0;
-      function upd(dt) {
-        menuPulse += dt * 2;
-
-        if (
-          gamePhase === "menu" ||
-          gamePhase === "win" ||
-          gamePhase === "gameover"
-        )
-          return;
-
-        if (gamePhase === "levelComplete") {
-          levelCompleteTimer += dt;
-          return;
-        }
-
-        // Layar transisi antar level
-        if (gamePhase === "transition") {
-          transitionTimer += dt;
-          if (transitionTimer >= 2.5) {
-            currentLevel = transitionNextLevel;
-            resetLevel(currentLevel);
-          }
-          return;
-        }
-
-        if (P.dead) {
-          P.deathTimer += dt;
-          P.vx = 0;
-          // Setelah 2 detik mati, masuk game over screen
-          if (P.deathTimer > 2.0) {
-            if (score > highScore) {
-              highScore = score;
-              localStorage.setItem("cs_highscore", highScore);
+      bullets.forEach((b) => {
+        enemies.forEach((e) => {
+          if (e.dead) return;
+          if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h) {
+            e.hp--;
+            b.life = 0;
+            spawnBlood(e.x + e.w / 2, e.y + e.h / 2);
+            if (e.hp <= 0) {
+              e.dead = true;
+              e.deadTimer = 0;
+              score += 10;
             }
-            gamePhase = "gameover";
           }
-          particles = particles.filter((p) => {
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vy += 400 * dt;
-            p.life -= dt * 1.5;
-            return p.life > 0;
-          });
-          updateEnemies(dt);
-          return;
-        }
+        });
+      });
 
+      if (!P.dead) {
+        enemyBullets.forEach((b) => {
+          // Hitbox player: P.x, P.y, P.w, P.h (P.h=70 saat jongkok, 100 saat berdiri)
+          if (b.x > P.x && b.x < P.x + P.w && b.y > P.y && b.y < P.y + P.h) {
+            P.hp--;
+            b.life = 0;
+            P.hitFlash = 0.35; // aktifkan hit flash
+            spawnBlood(P.x + P.w / 2, P.y + P.h / 2);
+            if (P.hp <= 0) {
+              P.dead = true;
+              P.deathTimer = 0;
+            }
+          }
+        });
+      }
+    }
+
+    // === INPUT ===
+    const K = {};
+    window.addEventListener("keydown", (e) => {
+      K[e.code] = true;
+      // Jangan preventDefault untuk F agar tidak block shortcut lain
+      if (e.code !== "KeyF") e.preventDefault();
+
+      // Toggle fullscreen dengan F
+      if (e.code === "KeyF") {
+        toggleFS();
+        return;
+      }
+
+      // Saat transisi: abaikan semua input
+      if (gamePhase === "transition") return;
+
+      // Pause dengan ESC saat playing/levelComplete
+      if ((e.code === "Escape" || e.code === "KeyP") && (gamePhase === "playing" || gamePhase === "levelComplete" || gamePaused)) {
+        gamePaused = !gamePaused;
+        return;
+      }
+      // Navigasi pause menu
+      if (gamePaused) {
+        if (e.code === "ArrowUp" || e.code === "KeyW") pauseSelected = (pauseSelected - 1 + 2) % 2;
+        else if (e.code === "ArrowDown" || e.code === "KeyS") pauseSelected = (pauseSelected + 1) % 2;
+        else if (e.code === "Enter" || e.code === "Space") {
+          if (pauseSelected === 0) { gamePaused = false; }
+          else { gamePaused = false; gamePhase = "menu"; menuFade = 0; menuFadeOut = 0; menuFadingOut = false; menuSelected = 0; }
+        }
+        return;
+      }
+      if (gamePhase === "menu") {
+        if (menuFadingOut) return;
+        // Tutup overlay jika terbuka
+        if (menuShowSettings) { menuShowSettings = false; return; }
+        if (menuShowHelp) { menuShowHelp = false; return; }
+        if (menuShowStageSelect) { menuShowStageSelect = false; return; }
+
+        const numItems = gameCleared ? 4 : 3;
+        if (e.code === "ArrowUp" || e.code === "KeyW") {
+          menuSelected = (menuSelected - 1 + numItems) % numItems;
+        } else if (e.code === "ArrowDown" || e.code === "KeyS") {
+          menuSelected = (menuSelected + 1) % numItems;
+        } else if (e.code === "Enter" || e.code === "Space") {
+          activateMenuItem(menuSelected);
+        }
+        return;
+      }
+
+      // Game Over: tekan R untuk retry dari level yang sama
+      if (gamePhase === "gameover") {
+        if (e.code === "KeyR") resetLevel(currentLevel);
+        return;
+      }
+
+      // Win screen: tekan R untuk main lagi dari awal
+      if (gamePhase === "win") {
+        if (e.code === "KeyR") {
+          currentLevel = 1;
+          startGame();
+        }
+        return;
+      }
+
+      if (e.code === "KeyR") {
+        if (P.dead) {
+          resetLevel(currentLevel);
+        } else if (gamePhase === "levelComplete" && currentLevel >= 3) {
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("cs_highscore", highScore);
+          }
+          gamePhase = "win";
+          gameCleared = true;
+          localStorage.setItem("cs_game_cleared", "true");
+        } else {
+          startReload();
+        }
+      }
+      // Space untuk tembak — cegah auto-repeat browser
+      if (e.code === "Space" && !e.repeat) shoot();
+      if (
+        (e.code === "Enter" || e.code === "KeyN") &&
+        gamePhase === "levelComplete" &&
+        currentLevel < 3
+      ) {
+        // Mulai layar transisi ke level berikutnya
+        transitionNextLevel = currentLevel + 1;
+        gamePhase = "transition";
+        transitionTimer = 0;
+      }
+    });
+    window.addEventListener("keyup", (e) => {
+      K[e.code] = false;
+      // Hentikan suara tembakan saat Space dilepas
+      if (e.code === "Space") stopShotSfx();
+    });
+
+    function startGame() {
+      // Stop menu music
+      if (typeof menuMusic !== "undefined" && !menuMusic.paused) menuMusic.pause();
+      stopShotSfx(); // Pastikan tidak ada suara nyangkut dari stage sebelumnya
+      // Request fullscreen
+      const el = document.getElementById("wrapper");
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => { });
+      }
+      resetLevel(currentLevel);
+    }
+
+    // Activate selected menu item
+    function activateMenuItem(idx) {
+      if (typeof clickSfx !== "undefined") {
+        clickSfx.currentTime = 0;
+        clickSfx.play().catch(() => { });
+      }
+
+      if (!gameCleared) {
+        if (idx === 0) menuFadingOut = true; // MULAI
+        else if (idx === 1) menuShowSettings = true; // SETTINGS
+        else if (idx === 2) window.location.href = "goodbye.html"; // EXIT
+      } else {
+        if (idx === 0) menuFadingOut = true; // MULAI
+        else if (idx === 1) menuShowStageSelect = true; // PILIH MAP
+        else if (idx === 2) menuShowSettings = true; // SETTINGS
+        else if (idx === 3) window.location.href = "goodbye.html"; // EXIT
+      }
+    }
+
+    function resetLevel(lvl) {
+      stopShotSfx(); // Bersihkan semua suara saat ganti level
+      currentLevel = lvl;
+      gamePhase = "playing";
+      levelCompleteTimer = 0;
+      score = 0;
+      spawnTimer = 0;
+      totalSpawned = 0;
+      enemies = [];
+      enemyBullets = [];
+      bullets = [];
+      particles = [];
+      levelTimer = 0;
+      resetPlayer();
+      cameraX = 0;
+    }
+
+    // === UPDATE ===
+    let lt = 0;
+    function upd(dt) {
+      menuPulse += dt * 2;
+
+      // Jangan update saat pause
+      if (gamePaused) return;
+
+      // Handle menu fade in
+      if (gamePhase === "menu") {
+        menuFade = Math.min(1, menuFade + dt * 3);
+        // Putar musik menu (hanya saat belum jalan)
+        if (menuMusic && menuMusic.paused) {
+          menuMusic.play().catch(() => { });
+        }
+        // Handle fade out saat PLAY ditekan
+        if (menuFadingOut) {
+          menuFadeOut = Math.min(1, menuFadeOut + dt * 4);
+          if (menuFadeOut >= 1) {
+            menuFadingOut = false;
+            menuFadeOut = 0;
+            menuFade = 0;
+            startGame();
+          }
+        }
+        return;
+      }
+
+      if (gamePhase === "win" || gamePhase === "gameover") return;
+
+      if (gamePhase === "levelComplete") {
+        levelCompleteTimer += dt;
+        return;
+      }
+
+      // Layar transisi antar level
+      if (gamePhase === "transition") {
+        transitionTimer += dt;
+        if (transitionTimer >= 2.5) {
+          currentLevel = transitionNextLevel;
+          resetLevel(currentLevel);
+        }
+        return;
+      }
+
+      if (P.dead) {
+        P.deathTimer += dt;
         P.vx = 0;
-        P.running = K.ShiftLeft || K.ShiftRight;
-        const spd = P.running ? P.runSpd : P.spd;
-
-        if (K.ArrowLeft || K.KeyA) {
-          P.vx = -spd;
-          P.fc = -1;
-        }
-        if (K.ArrowRight || K.KeyD) {
-          P.vx = spd;
-          P.fc = 1;
-        }
-
-        if ((K.ArrowUp || K.KeyW) && P.gnd && !P.crouching) {
-          P.vy = P.jf;
-          P.gnd = false;
-          P.jumping = true;
-        }
-        if ((K.ArrowDown || K.KeyS) && P.gnd) {
-          if (!P.crouching) {
-            P.crouching = true;
-            P.h = 70; // proporsional dengan asset jongkok (content ~310x338, ratio ~1:1)
-            P.y = P.FL - P.h;
+        // Setelah 2 detik mati, masuk game over screen
+        if (P.deathTimer > 2.0) {
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("cs_highscore", highScore);
           }
-        } else if (!(K.ArrowDown || K.KeyS) && P.crouching) {
-          P.crouching = false;
-          P.h = 100;
-          P.y = P.FL - P.h;
+          gamePhase = "gameover";
         }
-
-        P.vy += 1200 * dt;
-        P.x += P.vx * dt;
-        P.y += P.vy * dt;
-
-        if (P.y >= P.FL - P.h) {
-          P.y = P.FL - P.h;
-          P.vy = 0;
-          P.gnd = true;
-          P.jumping = false;
-        }
-        P.x = Math.max(0, Math.min(WORLD_WIDTH - P.w, P.x));
-
-        cameraX = P.x - 350;
-        cameraX = Math.max(0, Math.min(WORLD_WIDTH - 800, cameraX));
-
         particles = particles.filter((p) => {
           p.x += p.vx * dt;
           p.y += p.vy * dt;
@@ -1163,754 +1347,792 @@
           p.life -= dt * 1.5;
           return p.life > 0;
         });
-
-        bullets = bullets.filter((b) => {
-          b.x += b.vx * dt;
-          b.life -= dt;
-          return b.life > 0 && b.x > cameraX - 100 && b.x < cameraX + 900;
-        });
-
-        if (P.shooting) {
-          P.shootTimer += dt;
-          if (P.shootTimer >= 0.07) {
-            P.shootTimer = 0;
-            P.shootFr++;
-            if (P.shootFr >= 3) {
-              P.shooting = false;
-              P.shootFr = 0;
-            }
-          }
-        }
-
-        if (P.reloading) {
-          P.reloadTimer += dt;
-          if (P.reloadTimer >= 0.8) {
-            P.reloading = false;
-            P.reloadTimer = 0;
-            P.ammo = P.maxAmmo;
-          }
-        }
-
-        const curFps = P.running ? 16 : P.fps;
-        if (Math.abs(P.vx) > 10 || P.jumping || P.crouching) {
-          P.ft += dt;
-          if (P.ft >= 1 / curFps) {
-            P.ft = 0;
-            P.fr = (P.fr + 1) % 4;
-          }
-        } else {
-          P.fr = 0;
-          P.ft = 0;
-        }
-
-        // Update hit flash timer
-        if (P.hitFlash > 0) P.hitFlash -= dt;
-
-        // Countdown timer
-        if (!P.dead) {
-          levelTimer += dt;
-          const tLimit = LEVEL_CFG[currentLevel].timeLimit;
-          if (levelTimer >= tLimit) {
-            P.dead = true;
-            P.deathTimer = 99; // langsung game over
-            gamePhase = "gameover";
-          }
-        }
-
         updateEnemies(dt);
+        return;
       }
 
-      // === DRAW ===
-      function drw() {
-        X.clearRect(0, 0, 800, 400);
-        const cfg = LEVEL_CFG[currentLevel];
+      P.vx = 0;
+      P.running = K.ShiftLeft || K.ShiftRight;
+      const spd = P.running ? P.runSpd : P.spd;
 
-        // === LEVEL TRANSITION SCREEN ===
-        if (gamePhase === "transition") {
-          // Fase: 0-0.6 = fade in gelap, 0.6-1.8 = tampil text, 1.8-2.5 = fade out
-          const t = transitionTimer;
-          const nextCfg = LEVEL_CFG[transitionNextLevel];
+      if (K.ArrowLeft || K.KeyA) {
+        P.vx = -spd;
+        P.fc = -1;
+      }
+      if (K.ArrowRight || K.KeyD) {
+        P.vx = spd;
+        P.fc = 1;
+      }
 
-          // Gambar background level berikutnya
-          const bgImg = IMGS[nextCfg.bg];
-          if (bgImg) {
-            X.globalAlpha = 1;
-            X.drawImage(bgImg, 0, 0, 800, 400);
-          }
-
-          // Overlay gelap dengan fade
-          let alpha;
-          if (t < 0.6)
-            alpha = t / 0.6; // fade in
-          else if (t < 1.8)
-            alpha = 1.0; // penuh gelap
-          else alpha = 1.0 - (t - 1.8) / 0.7; // fade out
-          alpha = Math.max(0, Math.min(1, alpha)) * 0.88;
-          X.globalAlpha = alpha;
-          X.fillStyle = "#000000";
-          X.fillRect(0, 0, 800, 400);
-          X.globalAlpha = 1;
-
-          // Teks hanya saat pertengahan
-          if (t >= 0.5 && t <= 2.2) {
-            const textAlpha =
-              t < 0.8 ? (t - 0.5) / 0.3 : t > 1.9 ? (2.2 - t) / 0.3 : 1.0;
-            X.globalAlpha = Math.max(0, Math.min(1, textAlpha));
-            X.textAlign = "center";
-
-            // Label level
-            X.shadowColor = "#ff8800";
-            X.shadowBlur = 30;
-            X.fillStyle = "#ff8800";
-            X.font = "bold 22px monospace";
-            X.fillText("STAGE", 400, 165);
-            X.shadowBlur = 0;
-
-            // Nomor level besar
-            X.shadowColor = "#ffffff";
-            X.shadowBlur = 25;
-            X.fillStyle = "#ffffff";
-            X.font = "bold 90px monospace";
-            X.fillText(transitionNextLevel, 400, 255);
-            X.shadowBlur = 0;
-
-            // Garis dekorasi
-            X.strokeStyle = "#ff8800";
-            X.lineWidth = 2;
-            X.beginPath();
-            X.moveTo(200, 280);
-            X.lineTo(600, 280);
-            X.stroke();
-
-            X.fillStyle = "#aaaaaa";
-            X.font = "16px monospace";
-            const labels = [
-              "",
-              "Urban Assault",
-              "Industrial Zone",
-              "Final Showdown",
-            ];
-            X.fillText(labels[transitionNextLevel] || "", 400, 308);
-            X.globalAlpha = 1;
-            X.textAlign = "left";
-          }
-          return;
+      if ((K.ArrowUp || K.KeyW) && P.gnd && !P.crouching) {
+        P.vy = P.jf;
+        P.gnd = false;
+        P.jumping = true;
+      }
+      if ((K.ArrowDown || K.KeyS) && P.gnd) {
+        if (!P.crouching) {
+          P.crouching = true;
+          P.h = 70; // proporsional dengan asset jongkok (content ~310x338, ratio ~1:1)
+          P.y = P.FL - P.h;
         }
+      } else if (!(K.ArrowDown || K.KeyS) && P.crouching) {
+        P.crouching = false;
+        P.h = 100;
+        P.y = P.FL - P.h;
+      }
 
-        // === MAIN MENU ===
-        if (gamePhase === "menu") {
-          // Background gelap gradient
-          const g = X.createLinearGradient(0, 0, 0, 400);
-          g.addColorStop(0, "#0a0a1a");
-          g.addColorStop(1, "#050510");
-          X.fillStyle = g;
-          X.fillRect(0, 0, 800, 400);
+      P.vy += 1200 * dt;
+      P.x += P.vx * dt;
+      P.y += P.vy * dt;
 
-          // Garis dekorasi kiri
-          X.strokeStyle = "rgba(255,136,0,0.2)";
-          X.lineWidth = 1;
-          X.beginPath();
-          X.moveTo(400, 0);
-          X.lineTo(400, 400);
-          X.stroke();
+      if (P.y >= P.FL - P.h) {
+        P.y = P.FL - P.h;
+        P.vy = 0;
+        P.gnd = true;
+        P.jumping = false;
+      }
+      P.x = Math.max(0, Math.min(WORLD_WIDTH - P.w, P.x));
 
-          // === KANAN: Gambar asset dari ChatGPT ===
-          const menuArt = IMGS["bgmenu"];
-          if (menuArt) {
-            // Tampilkan sebagai asset di sisi kanan, bukan full background
-            X.save();
-            X.globalAlpha = 0.92;
-            // Crop dan tampilkan di area kanan (400-800, full height)
-            X.drawImage(menuArt, 400, 0, 400, 400);
-            // Gradient fade ke kiri supaya menyatu dengan background
-            const fade = X.createLinearGradient(400, 0, 560, 0);
-            fade.addColorStop(0, "rgba(8,8,20,1)");
-            fade.addColorStop(1, "rgba(8,8,20,0)");
-            X.globalAlpha = 1;
-            X.fillStyle = fade;
-            X.fillRect(400, 0, 160, 400);
-            X.restore();
+      cameraX = P.x - 350;
+      cameraX = Math.max(0, Math.min(WORLD_WIDTH - 800, cameraX));
+
+      particles = particles.filter((p) => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 400 * dt;
+        p.life -= dt * 1.5;
+        return p.life > 0;
+      });
+
+      bullets = bullets.filter((b) => {
+        b.x += b.vx * dt;
+        b.life -= dt;
+        return b.life > 0 && b.x > cameraX - 100 && b.x < cameraX + 900;
+      });
+
+      if (P.shooting) {
+        P.shootTimer += dt;
+        if (P.shootTimer >= 0.07) {
+          P.shootTimer = 0;
+          P.shootFr++;
+          if (P.shootFr >= 3) {
+            P.shooting = false;
+            P.shootFr = 0;
           }
-
-          // === LAYAR BANTUAN ===
-          if (menuShowHelp) {
-            X.fillStyle = "rgba(0,0,0,0.88)";
-            X.fillRect(80, 40, 640, 320);
-            X.strokeStyle = "#ff8800";
-            X.lineWidth = 2;
-            X.strokeRect(80, 40, 640, 320);
-            X.textAlign = "center";
-            X.fillStyle = "#ff8800";
-            X.font = "bold 20px 'Orbitron', monospace";
-            X.fillText("CARA BERMAIN", 400, 80);
-            X.fillStyle = "#fff";
-            X.font = "14px monospace";
-            const helps = [
-              "A / ←  →  D  =  Gerak kiri kanan",
-              "SHIFT        =  Lari",
-              "W / ↑        =  Lompat",
-              "S / ↓        =  Jongkok (hindari peluru)",
-              "SPACE        =  Tembak",
-              "R            =  Reload senjata",
-              "",
-              "Kalahkan semua musuh sebelum waktu habis!",
-              "Level 3 : Lawan FINAL BOSS",
-            ];
-            helps.forEach((h, i) => {
-              X.fillStyle = i === helps.length - 1 ? "#ffdd00" : "#ddd";
-              X.fillText(h, 400, 115 + i * 24);
-            });
-            X.fillStyle = "#888";
-            X.font = "13px monospace";
-            X.fillText("Tekan sembarang tombol untuk kembali", 400, 340);
-            X.textAlign = "left";
-            return;
-          }
-
-          // === KIRI: TITLE + MENU ===
-          X.textAlign = "left";
-
-          // Garis aksen oranye
-          X.fillStyle = "#ff8800";
-          X.fillRect(30, 55, 4, 60);
-
-          // Judul
-          X.shadowColor = "#ff4400";
-          X.shadowBlur = 25;
-          X.fillStyle = "#ff8800";
-          X.font = "900 42px 'Orbitron', monospace";
-          X.fillText("CITY", 44, 95);
-          X.fillStyle = "#ffffff";
-          X.font = "900 42px 'Orbitron', monospace";
-          X.fillText("SHOOTER", 44, 138);
-          X.shadowBlur = 0;
-
-          X.fillStyle = "rgba(255,221,0,0.8)";
-          X.font = "bold 10px 'Orbitron', monospace";
-          X.fillText("3 STAGE  •  FINAL BOSS  •  SIDE SCROLLER", 44, 162);
-
-          // Garis pemisah
-          X.strokeStyle = "rgba(255,136,0,0.4)";
-          X.lineWidth = 1;
-          X.beginPath();
-          X.moveTo(30, 180);
-          X.lineTo(370, 180);
-          X.stroke();
-
-          // High Score
-          if (highScore > 0) {
-            X.fillStyle = "#ffdd00";
-            X.font = "bold 11px monospace";
-            X.fillText("🏆  BEST SCORE: " + highScore, 30, 200);
-          }
-
-          // === MENU ITEMS ===
-          const menuItems = ["▶   MAIN SEKARANG", "?   CARA BERMAIN"];
-          const menuY = [245, 300];
-          menuItems.forEach((item, i) => {
-            const selected = menuSelected === i;
-            const py = menuY[i];
-            if (selected) {
-              X.shadowColor = "#ff8800";
-              X.shadowBlur = 15;
-            }
-            X.fillStyle = selected ? "rgba(255,136,0,0.25)" : "rgba(0,0,0,0.5)";
-            X.fillRect(30, py - 24, 340, 46);
-            X.strokeStyle = selected ? "#ff8800" : "rgba(255,136,0,0.3)";
-            X.lineWidth = selected ? 2 : 1;
-            X.strokeRect(30, py - 24, 340, 46);
-            // Aksen kiri saat dipilih
-            if (selected) {
-              X.fillStyle = "#ff8800";
-              X.fillRect(30, py - 24, 4, 46);
-            }
-            X.fillStyle = selected ? "#ffffff" : "#888888";
-            X.font = selected ? "bold 17px monospace" : "15px monospace";
-            X.fillText(item, 50, py + 5);
-            X.shadowBlur = 0;
-          });
-
-          // Petunjuk
-          X.fillStyle = "rgba(120,120,120,0.7)";
-          X.font = "10px monospace";
-          X.fillText("↑ ↓ pilih   ENTER / TAP konfirmasi", 30, 370);
-          X.textAlign = "left";
-          return;
         }
+      }
 
-        // === GAME OVER SCREEN ===
-        if (gamePhase === "gameover") {
-          X.fillStyle = "#0a0008";
-          X.fillRect(0, 0, 800, 400);
-          X.shadowColor = "#ff0000";
-          X.shadowBlur = 40;
-          X.fillStyle = "#ff2222";
-          X.font = "900 68px 'Orbitron', monospace";
-          X.textAlign = "center";
-          X.fillText("GAME OVER", 400, 162);
-          X.shadowBlur = 0;
-          X.fillStyle = "#ffffff";
-          X.font = "22px monospace";
-          X.fillText(
-            "Level " + currentLevel + "  |  Score: " + score,
-            400,
-            215,
-          );
-          const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
-          X.save();
-          X.translate(400, 285);
-          X.scale(pulse, pulse);
-          X.fillStyle = "#cc2222";
-          X.fillRect(-100, -24, 200, 48);
-          X.strokeStyle = "#ff8888";
-          X.lineWidth = 2;
-          X.strokeRect(-100, -24, 200, 48);
-          X.fillStyle = "#fff";
-          X.font = "bold 20px monospace";
-          X.fillText("TAP / R  ▶  COBA LAGI", 0, 8);
-          X.restore();
-          // High score di game over
-          if (highScore > 0) {
-            X.fillStyle = "#ffdd00";
-            X.font = "bold 13px monospace";
-            X.textAlign = "center";
-            X.fillText("🏆 BEST: " + highScore, 400, 335);
-          }
-          X.textAlign = "left";
-          return;
+      if (P.reloading) {
+        P.reloadTimer += dt;
+        if (P.reloadTimer >= 0.8) {
+          P.reloading = false;
+          P.reloadTimer = 0;
+          P.ammo = P.maxAmmo;
         }
+      }
 
-        // === WIN SCREEN ===
-        if (gamePhase === "win") {
-          X.fillStyle = "#000a05";
-          X.fillRect(0, 0, 800, 400);
-          X.shadowColor = "#00ff88";
-          X.shadowBlur = 40;
-          X.fillStyle = "#00ff88";
-          X.font = "900 44px 'Orbitron', monospace";
-          X.textAlign = "center";
-          X.fillText("MISSION COMPLETE!", 400, 128);
-          X.shadowBlur = 0;
-          X.fillStyle = "#ffdd00";
-          X.font = "bold 28px monospace";
-          X.fillText("BOSS DEFEATED!", 400, 185);
-          X.fillStyle = "#ffffff";
-          X.font = "22px monospace";
-          X.fillText("Final Score: " + score, 400, 230);
-          const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
-          X.save();
-          X.translate(400, 295);
-          X.scale(pulse, pulse);
-          X.fillStyle = "#006633";
-          X.fillRect(-110, -24, 220, 48);
-          X.strokeStyle = "#00ff88";
-          X.lineWidth = 2;
-          X.strokeRect(-110, -24, 220, 48);
-          X.fillStyle = "#fff";
-          X.font = "bold 20px monospace";
-          X.fillText("TAP / R  ▶  MAIN LAGI", 0, 8);
-          X.restore();
-          X.textAlign = "left";
-          return;
+      const curFps = P.running ? 16 : P.fps;
+      if (Math.abs(P.vx) > 10 || P.jumping || P.crouching) {
+        P.ft += dt;
+        if (P.ft >= 1 / curFps) {
+          P.ft = 0;
+          P.fr = (P.fr + 1) % 4;
         }
+      } else {
+        P.fr = 0;
+        P.ft = 0;
+      }
 
-        // Background
-        const bgImg = IMGS[cfg.bg];
+      // Update hit flash timer
+      if (P.hitFlash > 0) P.hitFlash -= dt;
+
+      // Countdown timer
+      if (!P.dead) {
+        levelTimer += dt;
+        const tLimit = LEVEL_CFG[currentLevel].timeLimit;
+        if (levelTimer >= tLimit) {
+          P.dead = true;
+          P.deathTimer = 99; // langsung game over
+          gamePhase = "gameover";
+        }
+      }
+
+      updateEnemies(dt);
+    }
+
+    // === DRAW ===
+    function drw() {
+      X.clearRect(0, 0, 800, 400);
+      const cfg = LEVEL_CFG[currentLevel];
+
+      // === LEVEL TRANSITION SCREEN ===
+      if (gamePhase === "transition") {
+        // Fase: 0-0.6 = fade in gelap, 0.6-1.8 = tampil text, 1.8-2.5 = fade out
+        const t = transitionTimer;
+        const nextCfg = LEVEL_CFG[transitionNextLevel];
+
+        // Gambar background level berikutnya
+        const bgImg = IMGS[nextCfg.bg];
         if (bgImg) {
-          const bgW = 800;
-          const offsetBg = -(cameraX * 0.3) % bgW;
-          X.drawImage(bgImg, offsetBg, 0, bgW, 400);
-          X.drawImage(bgImg, offsetBg + bgW, 0, bgW, 400);
-          X.drawImage(bgImg, offsetBg - bgW, 0, bgW, 400);
-        } else {
-          const g = X.createLinearGradient(0, 0, 0, 400);
-          g.addColorStop(0, "#050510");
-          g.addColorStop(1, "#0a0a20");
-          X.fillStyle = g;
-          X.fillRect(0, 0, 800, 400);
+          X.globalAlpha = 1;
+          X.drawImage(bgImg, 0, 0, 800, 400);
         }
 
-        X.fillStyle = "#1a1a2a";
-        X.fillRect(0, P.FL, 800, 400 - P.FL);
-        X.fillStyle = "#2a2a3a";
-        X.fillRect(0, P.FL, 800, 3);
-
-        particles.forEach((p) => {
-          X.globalAlpha = p.life;
-          X.fillStyle = p.col;
-          X.fillRect(p.x - cameraX - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
-        });
+        // Overlay gelap dengan fade
+        let alpha;
+        if (t < 0.6)
+          alpha = t / 0.6; // fade in
+        else if (t < 1.8)
+          alpha = 1.0; // penuh gelap
+        else alpha = 1.0 - (t - 1.8) / 0.7; // fade out
+        alpha = Math.max(0, Math.min(1, alpha)) * 0.88;
+        X.globalAlpha = alpha;
+        X.fillStyle = "#000000";
+        X.fillRect(0, 0, 800, 400);
         X.globalAlpha = 1;
 
-        drawCharacter(cfg);
+        // Teks hanya saat pertengahan
+        if (t >= 0.5 && t <= 2.2) {
+          const textAlpha =
+            t < 0.8 ? (t - 0.5) / 0.3 : t > 1.9 ? (2.2 - t) / 0.3 : 1.0;
+          X.globalAlpha = Math.max(0, Math.min(1, textAlpha));
+          X.textAlign = "center";
 
-        enemies.forEach((e) => {
-          let img;
-          if (e.dead) {
-            X.globalAlpha = Math.max(0, 1 - e.deadTimer);
-            img = IMGS[cfg.musuhFire];
-          } else if (e.state === "fire") {
-            img = e.crouching
-              ? IMGS[cfg.musuhJongkokFire]
-              : IMGS[cfg.musuhFire];
-          } else if (e.state === "aim") {
-            img = e.crouching ? IMGS[cfg.musuhJongkokAim] : IMGS[cfg.musuhAim];
-          } else {
-            img = IMGS[cfg.musuhJln[e.walkFr % cfg.musuhJln.length]];
-          }
-          const eRenderW = e.w;
-          const eRenderH = e.crouching ? Math.round(e.h * 0.75) : e.h;
-          const eRenderY = e.y + (e.h - eRenderH);
-          const ex = e.x - cameraX;
-          if (img) {
-            X.save();
-            if (e.fc < 0) {
-              X.translate(ex + eRenderW, eRenderY);
-              X.scale(-1, 1);
-              X.drawImage(img, 0, 0, eRenderW, eRenderH);
-            } else {
-              X.drawImage(img, ex, eRenderY, eRenderW, eRenderH);
-            }
-            X.restore();
-          } else {
-            X.fillStyle = e.isBoss ? "#880000" : "#ff0044";
-            X.fillRect(ex, eRenderY, eRenderW, eRenderH);
-          }
-
-          // Boss: mini HP bar di atas kepala
-          if (e.isBoss && !e.dead) {
-            const barW = eRenderW;
-            const bossMaxHp = LEVEL_CFG[3].enemyHp;
-            const bossHpR = e.hp / bossMaxHp;
-            X.fillStyle = "#333";
-            X.fillRect(ex, eRenderY - 14, barW, 8);
-            X.fillStyle =
-              bossHpR > 0.5
-                ? "#ff4400"
-                : bossHpR > 0.25
-                  ? "#ff8800"
-                  : "#ff0000";
-            X.fillRect(ex, eRenderY - 14, barW * bossHpR, 8);
-            X.strokeStyle = "#fff";
-            X.strokeRect(ex, eRenderY - 14, barW, 8);
-          }
-          X.globalAlpha = 1;
-        });
-
-        bullets.forEach((b) => {
-          X.fillStyle = "#ffcc00";
+          // Label level
           X.shadowColor = "#ff8800";
-          X.shadowBlur = 6;
-          X.fillRect(b.x - cameraX - 8, b.y - 2, 16, 4);
+          X.shadowBlur = 30;
+          X.fillStyle = "#ff8800";
+          X.font = "bold 22px monospace";
+          X.fillText("STAGE", 400, 165);
+          X.shadowBlur = 0;
+
+          // Nomor level besar
+          X.shadowColor = "#ffffff";
+          X.shadowBlur = 25;
+          X.fillStyle = "#ffffff";
+          X.font = "bold 90px monospace";
+          X.fillText(transitionNextLevel, 400, 255);
+          X.shadowBlur = 0;
+
+          // Garis dekorasi
+          X.strokeStyle = "#ff8800";
+          X.lineWidth = 2;
+          X.beginPath();
+          X.moveTo(200, 280);
+          X.lineTo(600, 280);
+          X.stroke();
+
+          X.fillStyle = "#aaaaaa";
+          X.font = "16px monospace";
+          const labels = [
+            "",
+            "Urban Assault",
+            "Industrial Zone",
+            "Final Showdown",
+          ];
+          X.fillText(labels[transitionNextLevel] || "", 400, 308);
+          X.globalAlpha = 1;
+          X.textAlign = "left";
+        }
+        return;
+      }
+      // === MAIN MENU ===
+      if (gamePhase === "menu") {
+        X.globalAlpha = 1;
+        const menuBg = IMGS["bgmenu"];
+        if (menuBg) X.drawImage(menuBg, 0, 0, 800, 400);
+        else { X.fillStyle = "#060610"; X.fillRect(0, 0, 800, 400); }
+        X.globalAlpha = menuFadingOut ? Math.max(0, 1 - menuFadeOut) : menuFade;
+
+        let btnLabels = ["▶  MULAI", "⚙  SETTINGS", "✖  EXIT"];
+        if (gameCleared) btnLabels = ["▶  MULAI", "🗺  PILIH MAP", "⚙  SETTINGS", "✖  EXIT"];
+        const btnW = 220, btnH = 44, btnGap = 52;
+        const btnX = 40;
+        const btnStartY = gameCleared ? 170 : 220;
+
+        btnLabels.forEach((label, i) => {
+          const by = btnStartY + i * btnGap;
+          const isSel = menuSelected === i && !menuShowSettings && !menuShowHelp && !menuShowStageSelect;
+          X.fillStyle = isSel ? "rgba(255,136,0,0.3)" : "rgba(0,0,0,0.6)";
+          roundRect(X, btnX, by, btnW, btnH, 6, true, false);
+          X.strokeStyle = isSel ? "#ff8800" : "rgba(255,255,255,0.2)";
+          X.lineWidth = isSel ? 2 : 1;
+          if (isSel) { X.shadowColor = "#ff8800"; X.shadowBlur = 10; }
+          roundRect(X, btnX, by, btnW, btnH, 6, false, true);
+          X.shadowBlur = 0;
+          if (isSel) { X.fillStyle = "#ff8800"; X.fillRect(btnX, by, 4, btnH); }
+          X.fillStyle = isSel ? "#ffffff" : "#cccccc";
+          X.font = isSel ? "bold 15px Orbitron, monospace" : "13px Orbitron, monospace";
+          X.textAlign = "left";
+          X.fillText(label, btnX + 30, by + 28);
         });
+
+        if (menuShowSettings) {
+          drawMenuOverlay("SETTINGS", ["🎵 MUSIC: 50%", "🔊 SFX: 70%", "?? RES: AUTO", "KLIK UNTUK KEMBALI"]);
+        } else if (menuShowStageSelect) {
+          X.fillStyle = "rgba(0,0,0,0.85)";
+          X.fillRect(0, 0, 800, 400);
+          X.textAlign = "center";
+          X.fillStyle = "#ff8800";
+          X.font = "bold 24px Orbitron, monospace";
+          X.fillText("PILIH MAP / STAGE", 400, 80);
+          const stages = [{ id: 1, name: "URBAN ASSAULT", color: "#00eeff" }, { id: 2, name: "INDUSTRIAL ZONE", color: "#ffaa00" }, { id: 3, name: "FINAL SHOWDOWN", color: "#ff4400" }];
+          stages.forEach((st, i) => {
+            const sx = 100 + i * 210, sy = 140, sw = 180, sh = 120;
+            X.fillStyle = "rgba(255,255,255,0.1)"; X.fillRect(sx, sy, sw, sh);
+            X.strokeStyle = st.color; X.strokeRect(sx, sy, sw, sh);
+            X.fillStyle = st.color; X.font = "bold 35px Orbitron, monospace"; X.fillText(st.id, sx + sw / 2, sy + 60);
+            X.fillStyle = "#ffffff"; X.font = "bold 11px monospace"; X.fillText(st.name, sx + sw / 2, sy + 95);
+          });
+          X.fillStyle = "#aaaaaa"; X.font = "12px monospace"; X.fillText("KLIK KOTAK UNTUK PILIH | KLIK LUAR UNTUK KEMBALI", 400, 320);
+        }
+        X.textAlign = "left"; return;
+      }
+
+      // === GAME OVER SCREEN ===
+      if (gamePhase === "gameover") {
+        X.fillStyle = "#0a0008";
+        X.fillRect(0, 0, 800, 400);
+        X.shadowColor = "#ff0000";
+        X.shadowBlur = 40;
+        X.fillStyle = "#ff2222";
+        X.font = "900 68px 'Orbitron', monospace";
+        X.textAlign = "center";
+        X.fillText("GAME OVER", 400, 162);
+        X.shadowBlur = 0;
+        X.fillStyle = "#ffffff";
+        X.font = "22px monospace";
+        X.fillText(
+          "Level " + currentLevel + "  |  Score: " + score,
+          400,
+          215,
+        );
+        const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
+        X.save();
+        X.translate(400, 285);
+        X.scale(pulse, pulse);
+        X.fillStyle = "#cc2222";
+        X.fillRect(-100, -24, 200, 48);
+        X.strokeStyle = "#ff8888";
+        X.lineWidth = 2;
+        X.strokeRect(-100, -24, 200, 48);
+        X.fillStyle = "#fff";
+        X.font = "bold 20px monospace";
+        X.fillText("TAP / R  ▶  COBA LAGI", 0, 8);
+        X.restore();
+        // High score di game over
+        if (highScore > 0) {
+          X.fillStyle = "#ffdd00";
+          X.font = "bold 13px monospace";
+          X.textAlign = "center";
+          X.fillText("🏆 BEST: " + highScore, 400, 335);
+        }
+        X.textAlign = "left";
+        return;
+      }
+
+      // === WIN SCREEN ===
+      if (gamePhase === "win") {
+        X.fillStyle = "#000a05";
+        X.fillRect(0, 0, 800, 400);
+        X.shadowColor = "#00ff88";
+        X.shadowBlur = 40;
+        X.fillStyle = "#00ff88";
+        X.font = "900 44px 'Orbitron', monospace";
+        X.textAlign = "center";
+        X.fillText("MISSION COMPLETE!", 400, 128);
+        X.shadowBlur = 0;
+        X.fillStyle = "#ffdd00";
+        X.font = "bold 28px monospace";
+        X.fillText("BOSS DEFEATED!", 400, 185);
+        X.fillStyle = "#ffffff";
+        X.font = "22px monospace";
+        X.fillText("Final Score: " + score, 400, 230);
+        const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
+        X.save();
+        X.translate(400, 295);
+        X.scale(pulse, pulse);
+        X.fillStyle = "#006633";
+        X.fillRect(-110, -24, 220, 48);
+        X.strokeStyle = "#00ff88";
+        X.lineWidth = 2;
+        X.strokeRect(-110, -24, 220, 48);
+        X.fillStyle = "#fff";
+        X.font = "bold 20px monospace";
+        X.fillText("TAP / R  ▶  MAIN LAGI", 0, 8);
+        X.restore();
+        X.textAlign = "left";
+        return;
+      }
+
+      // Background
+      const bgImg = IMGS[cfg.bg];
+      if (bgImg) {
+        const bgW = 800;
+        const offsetBg = -(cameraX * 0.3) % bgW;
+        X.drawImage(bgImg, offsetBg, 0, bgW, 400);
+        X.drawImage(bgImg, offsetBg + bgW, 0, bgW, 400);
+        X.drawImage(bgImg, offsetBg - bgW, 0, bgW, 400);
+      } else {
+        const g = X.createLinearGradient(0, 0, 0, 400);
+        g.addColorStop(0, "#050510");
+        g.addColorStop(1, "#0a0a20");
+        X.fillStyle = g;
+        X.fillRect(0, 0, 800, 400);
+      }
+
+      X.fillStyle = "#1a1a2a";
+      X.fillRect(0, P.FL, 800, 400 - P.FL);
+      X.fillStyle = "#2a2a3a";
+      X.fillRect(0, P.FL, 800, 3);
+
+      particles.forEach((p) => {
+        X.globalAlpha = p.life;
+        X.fillStyle = p.col;
+        X.fillRect(p.x - cameraX - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
+      });
+      X.globalAlpha = 1;
+
+      drawCharacter(cfg);
+
+      enemies.forEach((e) => {
+        let img;
+        if (e.dead) {
+          X.globalAlpha = Math.max(0, 1 - e.deadTimer);
+          img = IMGS[cfg.musuhFire];
+        } else if (e.state === "fire") {
+          img = e.crouching
+            ? IMGS[cfg.musuhJongkokFire]
+            : IMGS[cfg.musuhFire];
+        } else if (e.state === "aim") {
+          img = e.crouching ? IMGS[cfg.musuhJongkokAim] : IMGS[cfg.musuhAim];
+        } else {
+          img = IMGS[cfg.musuhJln[e.walkFr % cfg.musuhJln.length]];
+        }
+        const eRenderW = e.w;
+        const eRenderH = e.crouching ? Math.round(e.h * 0.75) : e.h;
+        const eRenderY = e.y + (e.h - eRenderH);
+        const ex = e.x - cameraX;
+        if (img) {
+          X.save();
+          if (e.fc < 0) {
+            X.translate(ex + eRenderW, eRenderY);
+            X.scale(-1, 1);
+            X.drawImage(img, 0, 0, eRenderW, eRenderH);
+          } else {
+            X.drawImage(img, ex, eRenderY, eRenderW, eRenderH);
+          }
+          X.restore();
+        } else {
+          X.fillStyle = e.isBoss ? "#880000" : "#ff0044";
+          X.fillRect(ex, eRenderY, eRenderW, eRenderH);
+        }
+
+        // Boss: mini HP bar di atas kepala
+        if (e.isBoss && !e.dead) {
+          const barW = eRenderW;
+          const bossMaxHp = LEVEL_CFG[3].enemyHp;
+          const bossHpR = e.hp / bossMaxHp;
+          X.fillStyle = "#333";
+          X.fillRect(ex, eRenderY - 14, barW, 8);
+          X.fillStyle =
+            bossHpR > 0.5
+              ? "#ff4400"
+              : bossHpR > 0.25
+                ? "#ff8800"
+                : "#ff0000";
+          X.fillRect(ex, eRenderY - 14, barW * bossHpR, 8);
+          X.strokeStyle = "#fff";
+          X.strokeRect(ex, eRenderY - 14, barW, 8);
+        }
+        X.globalAlpha = 1;
+      });
+
+      bullets.forEach((b) => {
+        X.fillStyle = "#ffcc00";
+        X.shadowColor = "#ff8800";
+        X.shadowBlur = 6;
+        X.fillRect(b.x - cameraX - 8, b.y - 2, 16, 4);
+      });
+      X.shadowBlur = 0;
+
+      enemyBullets.forEach((b) => {
+        X.fillStyle = "#ff3333";
+        X.shadowColor = "#ff0000";
+        X.shadowBlur = 6;
+        X.fillRect(b.x - cameraX - 6, b.y - 2, 12, 4);
+      });
+      X.shadowBlur = 0;
+
+      // ====== HUD REDESIGN ======
+      const hudFont = "'Orbitron', monospace";
+      const hudH = 52;
+
+      // Panel HUD atas semi-transparan
+      X.fillStyle = "rgba(0,0,0,0.7)";
+      X.fillRect(0, 0, 800, hudH);
+      X.strokeStyle = "rgba(255,136,0,0.35)";
+      X.lineWidth = 1;
+      X.beginPath();
+      X.moveTo(0, hudH);
+      X.lineTo(800, hudH);
+      X.stroke();
+
+      // === KIRI: HP BAR ===
+      X.fillStyle = "#ff8800";
+      X.font = "bold 9px " + hudFont;
+      X.fillText("HEALTH", 10, 14);
+      const hpR = P.hp / P.maxHp;
+      const hpColor =
+        hpR > 0.5 ? "#00e060" : hpR > 0.25 ? "#ffaa00" : "#ff2222";
+      // Glow saat HP rendah
+      if (hpR <= 0.25) {
+        X.shadowColor = "#ff0000";
+        X.shadowBlur = 8;
+      }
+      X.fillStyle = "rgba(255,255,255,0.07)";
+      X.fillRect(10, 18, 160, 16);
+      X.fillStyle = hpColor;
+      X.fillRect(10, 18, 160 * hpR, 16);
+      // Segmen HP bar
+      for (let s = 1; s < P.maxHp; s++) {
+        X.fillStyle = "rgba(0,0,0,0.4)";
+        X.fillRect(10 + (160 / P.maxHp) * s - 0.5, 18, 1, 16);
+      }
+      X.strokeStyle = "rgba(255,255,255,0.25)";
+      X.lineWidth = 1;
+      X.strokeRect(10, 18, 160, 16);
+      X.shadowBlur = 0;
+      X.fillStyle = "#fff";
+      X.font = "bold 9px " + hudFont;
+      X.fillText(P.hp + " / " + P.maxHp, 14, 30);
+
+      // === TENGAH: STAGE + TIMER + SCORE ===
+      X.textAlign = "center";
+      // Stage badge
+      X.fillStyle = "rgba(255,136,0,0.15)";
+      X.strokeStyle = "#ff8800";
+      X.lineWidth = 1;
+      X.fillRect(320, 4, 80, 16);
+      X.strokeRect(320, 4, 80, 16);
+      X.fillStyle = "#ff8800";
+      X.font = "bold 9px " + hudFont;
+      X.fillText("STAGE  " + currentLevel, 360, 16);
+
+      // Timer countdown - BESAR
+      const tLeft = Math.max(
+        0,
+        LEVEL_CFG[currentLevel].timeLimit - levelTimer,
+      );
+      const tMin = Math.floor(tLeft / 60);
+      const tSec = Math.floor(tLeft % 60);
+      const tStr = tMin + ":" + String(tSec).padStart(2, "0");
+      const isUrgent = tLeft < 20;
+      if (isUrgent) {
+        X.shadowColor = "#ff0000";
+        X.shadowBlur = 14;
+        X.fillStyle =
+          Math.floor(Date.now() / 250) % 2 === 0 ? "#ff3333" : "#ff9999";
+      } else if (tLeft < 40) {
+        X.fillStyle = "#ffaa00";
+      } else {
+        X.fillStyle = "#ffffff";
+      }
+      X.font = "900 26px " + hudFont;
+      X.fillText(tStr, 400, 44);
+      X.shadowBlur = 0;
+
+      // Ikon jam kecil
+      X.fillStyle = isUrgent ? "#ff4444" : "#aaa";
+      X.font = "12px monospace";
+      X.fillText("⏱", 375, 44);
+
+      // Score
+      X.textAlign = "right";
+      X.fillStyle = "#888";
+      X.font = "bold 9px " + hudFont;
+      X.fillText("SCORE", 790, 14);
+      X.fillStyle = "#ffdd00";
+      X.font = "bold 18px " + hudFont;
+      X.fillText(score, 790, 34);
+
+      // === KANAN: AMMO ICONS ===
+      X.textAlign = "left";
+      X.fillStyle = "#888";
+      X.font = "bold 9px " + hudFont;
+      const ammoLabelX = 615;
+      X.fillText("AMMO", ammoLabelX, 14);
+      for (let i = 0; i < P.maxAmmo; i++) {
+        const bx = ammoLabelX + i * 19;
+        const filled = i < P.ammo;
+        if (P.reloading) {
+          // Efek reload: isi dari kiri berdasarkan timer
+          const reloadFull = P.reloadTimer / 0.8;
+          const fillPct = Math.min(1, reloadFull * P.maxAmmo - i);
+          X.fillStyle =
+            fillPct > 0
+              ? "rgba(255,220,0," + Math.min(1, fillPct) + ")"
+              : "rgba(255,255,255,0.12)";
+        } else {
+          X.fillStyle = filled ? "#ffdd00" : "rgba(255,255,255,0.12)";
+        }
+        // Gambar peluru (lonjong) - pakai rect biasa untuk kompatibilitas
+        X.beginPath();
+        X.rect(bx, 18, 13, 24);
+        X.fill();
+        // Highlight
+        if (filled && !P.reloading) {
+          X.fillStyle = "rgba(255,255,255,0.25)";
+          X.fillRect(bx + 2, 20, 3, 9);
+        }
+      }
+      if (P.reloading) {
+        X.fillStyle = "#ff8800";
+        X.font = "bold 9px " + hudFont;
+        X.fillText("RELOADING...", ammoLabelX, 50);
+      }
+
+      // === TOMBOL ⚙ (PAUSE) di pojok kanan atas HUD ===
+      X.textAlign = "center";
+      X.fillStyle = "rgba(0,0,0,0.5)";
+      X.fillRect(756, 6, 38, 38);
+      X.strokeStyle = "rgba(255,136,0,0.6)";
+      X.lineWidth = 1;
+      X.strokeRect(756, 6, 38, 38);
+      X.fillStyle = "#ff8800";
+      X.font = "bold 20px monospace";
+      X.fillText("⚙", 775, 31);
+      X.textAlign = "left";
+
+      // === PAUSE OVERLAY ===
+      if (gamePaused) {
+        X.fillStyle = "rgba(0,0,0,0.82)";
+        X.fillRect(0, 0, 800, 400);
+
+        // Panel
+        X.fillStyle = "rgba(10,10,30,0.96)";
+        const pw = 320, ph = 220, px = (800 - pw) / 2, py = (400 - ph) / 2;
+        X.fillRect(px, py, pw, ph);
+        X.strokeStyle = "#ff8800";
+        X.lineWidth = 2;
+        X.strokeRect(px, py, pw, ph);
+        // Aksen atas oranye
+        X.fillStyle = "#ff8800";
+        X.fillRect(px, py, pw, 4);
+
+        // Judul PAUSE
+        X.textAlign = "center";
+        X.shadowColor = "#ff8800";
+        X.shadowBlur = 18;
+        X.fillStyle = "#ff8800";
+        X.font = "bold 24px 'Orbitron', monospace";
+        X.fillText("PAUSE", 400, py + 46);
         X.shadowBlur = 0;
 
-        enemyBullets.forEach((b) => {
-          X.fillStyle = "#ff3333";
-          X.shadowColor = "#ff0000";
-          X.shadowBlur = 6;
-          X.fillRect(b.x - cameraX - 6, b.y - 2, 12, 4);
-        });
-        X.shadowBlur = 0;
-
-        // ====== HUD REDESIGN ======
-        const hudFont = "'Orbitron', monospace";
-        const hudH = 52;
-
-        // Panel HUD atas semi-transparan
-        X.fillStyle = "rgba(0,0,0,0.7)";
-        X.fillRect(0, 0, 800, hudH);
+        // Garis pemisah
         X.strokeStyle = "rgba(255,136,0,0.35)";
         X.lineWidth = 1;
         X.beginPath();
-        X.moveTo(0, hudH);
-        X.lineTo(800, hudH);
+        X.moveTo(px + 20, py + 60);
+        X.lineTo(px + pw - 20, py + 60);
         X.stroke();
 
-        // === KIRI: HP BAR ===
-        X.fillStyle = "#ff8800";
-        X.font = "bold 9px " + hudFont;
-        X.fillText("HEALTH", 10, 14);
-        const hpR = P.hp / P.maxHp;
-        const hpColor =
-          hpR > 0.5 ? "#00e060" : hpR > 0.25 ? "#ffaa00" : "#ff2222";
-        // Glow saat HP rendah
-        if (hpR <= 0.25) {
-          X.shadowColor = "#ff0000";
-          X.shadowBlur = 8;
-        }
-        X.fillStyle = "rgba(255,255,255,0.07)";
-        X.fillRect(10, 18, 160, 16);
-        X.fillStyle = hpColor;
-        X.fillRect(10, 18, 160 * hpR, 16);
-        // Segmen HP bar
-        for (let s = 1; s < P.maxHp; s++) {
-          X.fillStyle = "rgba(0,0,0,0.4)";
-          X.fillRect(10 + (160 / P.maxHp) * s - 0.5, 18, 1, 16);
-        }
-        X.strokeStyle = "rgba(255,255,255,0.25)";
+        // Tombol pause menu
+        const pOptions = ["▶  LANJUTKAN", "⌂  KEMBALI KE MENU"];
+        const pBtnY = [py + 100, py + 160];
+        pOptions.forEach((opt, i) => {
+          const sel = pauseSelected === i;
+          if (sel) { X.shadowColor = "#ff8800"; X.shadowBlur = 14; }
+          X.fillStyle = sel ? "rgba(255,136,0,0.28)" : "rgba(0,0,0,0.5)";
+          X.fillRect(px + 20, pBtnY[i] - 22, pw - 40, 40);
+          X.strokeStyle = sel ? "#ff8800" : "rgba(255,136,0,0.25)";
+          X.lineWidth = sel ? 2 : 1;
+          X.strokeRect(px + 20, pBtnY[i] - 22, pw - 40, 40);
+          if (sel) { X.fillStyle = "#ff8800"; X.fillRect(px + 20, pBtnY[i] - 22, 4, 40); }
+          X.shadowBlur = 0;
+          X.fillStyle = sel ? "#ffffff" : "#888888";
+          X.font = sel ? "bold 15px 'Orbitron', monospace" : "13px 'Orbitron', monospace";
+          X.fillText(opt, 400, pBtnY[i] + 4);
+        });
+
+        // Hint
+        X.fillStyle = "rgba(120,120,120,0.6)";
+        X.font = "9px monospace";
+        X.fillText("ESC / P untuk lanjutkan", 400, py + ph - 12);
+        X.textAlign = "left";
+      }
+
+      // === BOSS HP BAR (Level 3) ===
+      if (currentLevel === 3 && enemies.length > 0 && !enemies[0].dead) {
+        const boss = enemies[0];
+        const bossMaxHp = LEVEL_CFG[3].enemyHp;
+        const bossHpR = boss.hp / bossMaxHp;
+        X.textAlign = "center";
+        // Panel
+        X.fillStyle = "rgba(0,0,0,0.7)";
+        X.fillRect(140, hudH + 4, 520, 24);
+        X.strokeStyle = "#ff4400";
         X.lineWidth = 1;
-        X.strokeRect(10, 18, 160, 16);
+        X.strokeRect(140, hudH + 4, 520, 24);
+        // Bar
+        const bc =
+          bossHpR > 0.5 ? "#ff4400" : bossHpR > 0.25 ? "#ff8800" : "#ff0000";
+        X.fillStyle = bc;
+        X.fillRect(142, hudH + 6, 516 * bossHpR, 20);
+        X.fillStyle = "#fff";
+        X.font = "bold 10px " + hudFont;
+        X.fillText(
+          "⚠ BOSS  " + boss.hp + " / " + bossMaxHp + "  ⚠",
+          400,
+          hudH + 20,
+        );
+        X.textAlign = "left";
+      }
+
+      // === BOTTOM: Kill counter (Level 1 & 2) ===
+      if (currentLevel < 3) {
+        const killed = Math.floor(score / 10);
+        const total = cfg.maxEnemies;
+        const remaining = Math.max(0, total - killed);
+        X.fillStyle = "rgba(0,0,0,0.6)";
+        X.fillRect(0, 374, 190, 26);
+        X.fillStyle = remaining > 0 ? "#ff8800" : "#00e060";
+        X.font = "bold 10px " + hudFont;
+        X.fillText("☠ MUSUH: " + remaining + " / " + total, 10, 390);
+        // Kill progress bar
+        X.fillStyle = "rgba(255,255,255,0.08)";
+        X.fillRect(10, 394, 150, 4);
+        X.fillStyle = "#ff4400";
+        X.fillRect(10, 394, 150 * (killed / total), 4);
+      }
+
+      // Level Complete overlay
+      if (gamePhase === "levelComplete") {
+        X.fillStyle = "rgba(0,0,0,0.7)";
+        X.fillRect(0, 0, 800, 400);
+        X.textAlign = "center";
+        X.fillStyle = currentLevel === 3 ? "#ffdd00" : "#00ff88";
+        X.shadowColor = currentLevel === 3 ? "#ffdd00" : "#00ff88";
+        X.shadowBlur = 20;
+        X.font = "bold 40px monospace";
+        X.fillText(cfg.label, 400, 155);
         X.shadowBlur = 0;
         X.fillStyle = "#fff";
-        X.font = "bold 9px " + hudFont;
-        X.fillText(P.hp + " / " + P.maxHp, 14, 30);
-
-        // === TENGAH: STAGE + TIMER + SCORE ===
-        X.textAlign = "center";
-        // Stage badge
-        X.fillStyle = "rgba(255,136,0,0.15)";
-        X.strokeStyle = "#ff8800";
-        X.lineWidth = 1;
-        X.fillRect(320, 4, 80, 16);
-        X.strokeRect(320, 4, 80, 16);
-        X.fillStyle = "#ff8800";
-        X.font = "bold 9px " + hudFont;
-        X.fillText("STAGE  " + currentLevel, 360, 16);
-
-        // Timer countdown - BESAR
-        const tLeft = Math.max(
-          0,
-          LEVEL_CFG[currentLevel].timeLimit - levelTimer,
-        );
-        const tMin = Math.floor(tLeft / 60);
-        const tSec = Math.floor(tLeft % 60);
-        const tStr = tMin + ":" + String(tSec).padStart(2, "0");
-        const isUrgent = tLeft < 20;
-        if (isUrgent) {
-          X.shadowColor = "#ff0000";
-          X.shadowBlur = 14;
-          X.fillStyle =
-            Math.floor(Date.now() / 250) % 2 === 0 ? "#ff3333" : "#ff9999";
-        } else if (tLeft < 40) {
-          X.fillStyle = "#ffaa00";
-        } else {
-          X.fillStyle = "#ffffff";
-        }
-        X.font = "900 26px " + hudFont;
-        X.fillText(tStr, 400, 44);
-        X.shadowBlur = 0;
-
-        // Ikon jam kecil
-        X.fillStyle = isUrgent ? "#ff4444" : "#aaa";
-        X.font = "12px monospace";
-        X.fillText("⏱", 375, 44);
-
-        // Score
-        X.textAlign = "right";
-        X.fillStyle = "#888";
-        X.font = "bold 9px " + hudFont;
-        X.fillText("SCORE", 790, 14);
-        X.fillStyle = "#ffdd00";
-        X.font = "bold 18px " + hudFont;
-        X.fillText(score, 790, 34);
-
-        // === KANAN: AMMO ICONS ===
+        X.font = "22px monospace";
+        X.fillText("Score: " + score, 400, 205);
+        const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
+        X.save();
+        X.translate(400, 275);
+        X.scale(pulse, pulse);
+        X.fillStyle = currentLevel < 3 ? "#226600" : "#664400";
+        X.fillRect(-140, -24, 280, 48);
+        X.strokeStyle = currentLevel < 3 ? "#00ff88" : "#ffdd00";
+        X.lineWidth = 2;
+        X.strokeRect(-140, -24, 280, 48);
+        X.fillStyle = "#fff";
+        X.font = "bold 18px monospace";
+        const nextTxt =
+          currentLevel < 3
+            ? "ENTER / TAP  ▶  Level " + (currentLevel + 1)
+            : "TAP / R  ▶  MAIN LAGI";
+        X.fillText(nextTxt, 0, 8);
+        X.restore();
         X.textAlign = "left";
-        X.fillStyle = "#888";
-        X.font = "bold 9px " + hudFont;
-        const ammoLabelX = 615;
-        X.fillText("AMMO", ammoLabelX, 14);
-        for (let i = 0; i < P.maxAmmo; i++) {
-          const bx = ammoLabelX + i * 19;
-          const filled = i < P.ammo;
-          if (P.reloading) {
-            // Efek reload: isi dari kiri berdasarkan timer
-            const reloadFull = P.reloadTimer / 0.8;
-            const fillPct = Math.min(1, reloadFull * P.maxAmmo - i);
-            X.fillStyle =
-              fillPct > 0
-                ? "rgba(255,220,0," + Math.min(1, fillPct) + ")"
-                : "rgba(255,255,255,0.12)";
-          } else {
-            X.fillStyle = filled ? "#ffdd00" : "rgba(255,255,255,0.12)";
-          }
-          // Gambar peluru (lonjong) - pakai rect biasa untuk kompatibilitas
-          X.beginPath();
-          X.rect(bx, 18, 13, 24);
-          X.fill();
-          // Highlight
-          if (filled && !P.reloading) {
-            X.fillStyle = "rgba(255,255,255,0.25)";
-            X.fillRect(bx + 2, 20, 3, 9);
-          }
-        }
-        if (P.reloading) {
-          X.fillStyle = "#ff8800";
-          X.font = "bold 9px " + hudFont;
-          X.fillText("RELOADING...", ammoLabelX, 50);
-        }
-
-        // === BOSS HP BAR (Level 3) ===
-        if (currentLevel === 3 && enemies.length > 0 && !enemies[0].dead) {
-          const boss = enemies[0];
-          const bossMaxHp = LEVEL_CFG[3].enemyHp;
-          const bossHpR = boss.hp / bossMaxHp;
-          X.textAlign = "center";
-          // Panel
-          X.fillStyle = "rgba(0,0,0,0.7)";
-          X.fillRect(140, hudH + 4, 520, 24);
-          X.strokeStyle = "#ff4400";
-          X.lineWidth = 1;
-          X.strokeRect(140, hudH + 4, 520, 24);
-          // Bar
-          const bc =
-            bossHpR > 0.5 ? "#ff4400" : bossHpR > 0.25 ? "#ff8800" : "#ff0000";
-          X.fillStyle = bc;
-          X.fillRect(142, hudH + 6, 516 * bossHpR, 20);
-          X.fillStyle = "#fff";
-          X.font = "bold 10px " + hudFont;
-          X.fillText(
-            "⚠ BOSS  " + boss.hp + " / " + bossMaxHp + "  ⚠",
-            400,
-            hudH + 20,
-          );
-          X.textAlign = "left";
-        }
-
-        // === BOTTOM: Kill counter (Level 1 & 2) ===
-        if (currentLevel < 3) {
-          const killed = Math.floor(score / 10);
-          const total = cfg.maxEnemies;
-          const remaining = Math.max(0, total - killed);
-          X.fillStyle = "rgba(0,0,0,0.6)";
-          X.fillRect(0, 374, 190, 26);
-          X.fillStyle = remaining > 0 ? "#ff8800" : "#00e060";
-          X.font = "bold 10px " + hudFont;
-          X.fillText("☠ MUSUH: " + remaining + " / " + total, 10, 390);
-          // Kill progress bar
-          X.fillStyle = "rgba(255,255,255,0.08)";
-          X.fillRect(10, 394, 150, 4);
-          X.fillStyle = "#ff4400";
-          X.fillRect(10, 394, 150 * (killed / total), 4);
-        }
-
-        // Level Complete overlay
-        if (gamePhase === "levelComplete") {
-          X.fillStyle = "rgba(0,0,0,0.7)";
-          X.fillRect(0, 0, 800, 400);
-          X.textAlign = "center";
-          X.fillStyle = currentLevel === 3 ? "#ffdd00" : "#00ff88";
-          X.shadowColor = currentLevel === 3 ? "#ffdd00" : "#00ff88";
-          X.shadowBlur = 20;
-          X.font = "bold 40px monospace";
-          X.fillText(cfg.label, 400, 155);
-          X.shadowBlur = 0;
-          X.fillStyle = "#fff";
-          X.font = "22px monospace";
-          X.fillText("Score: " + score, 400, 205);
-          const pulse = 0.9 + Math.sin(menuPulse) * 0.1;
-          X.save();
-          X.translate(400, 275);
-          X.scale(pulse, pulse);
-          X.fillStyle = currentLevel < 3 ? "#226600" : "#664400";
-          X.fillRect(-140, -24, 280, 48);
-          X.strokeStyle = currentLevel < 3 ? "#00ff88" : "#ffdd00";
-          X.lineWidth = 2;
-          X.strokeRect(-140, -24, 280, 48);
-          X.fillStyle = "#fff";
-          X.font = "bold 18px monospace";
-          const nextTxt =
-            currentLevel < 3
-              ? "ENTER / TAP  ▶  Level " + (currentLevel + 1)
-              : "TAP / R  ▶  MAIN LAGI";
-          X.fillText(nextTxt, 0, 8);
-          X.restore();
-          X.textAlign = "left";
-        }
       }
+    }
 
-      function drawCharacter(cfg) {
-        const sx = P.x - cameraX;
-        if (P.dead) {
-          const img = IMGS[cfg.mati];
-          if (img) {
-            X.save();
-            // Lebar dead = tinggi walk (P.h=100px), tinggi dead = lebar walk (P.w=80px)
-            const renderW = P.h; // 100px lebar
-            const renderH = P.w; // 80px tinggi
-            const drawY = P.FL - renderH;
-            if (P.fc < 0) {
-              X.translate(sx + renderW, drawY);
-              X.scale(-1, 1);
-              X.drawImage(img, 0, 0, renderW, renderH);
-            } else {
-              X.drawImage(img, sx, drawY, renderW, renderH);
-            }
-            X.restore();
-          }
-          return;
-        }
-
-        let img;
-        // Semua animasi dirender dengan ukuran sama persis seperti walk (P.w x P.h)
-        if (P.reloading) {
-          img = P.crouching ? IMGS[cfg.nembakjongkok4] : IMGS[cfg.nembak4];
-        } else if (P.shooting && P.crouching) {
-          img =
-            IMGS[
-              cfg.nembakjongkok[
-                Math.min(P.shootFr, cfg.nembakjongkok.length - 1)
-              ]
-            ];
-        } else if (P.shooting) {
-          img = IMGS[cfg.nembak[Math.min(P.shootFr, cfg.nembak.length - 1)]];
-        } else if (P.jumping) {
-          img = IMGS[cfg.loncat[Math.min(P.fr, cfg.loncat.length - 1)]];
-        } else if (P.crouching) {
-          img = IMGS[cfg.jongkok[Math.min(P.fr, cfg.jongkok.length - 1)]];
-        } else if (P.running && Math.abs(P.vx) > 10) {
-          img = IMGS[cfg.lari[Math.min(P.fr, cfg.lari.length - 1)]];
-        } else {
-          img = IMGS[cfg.jln[Math.min(P.fr, cfg.jln.length - 1)]];
-        }
-
-        // Fallback: kalau img belum load, pakai frame walk pertama
-        if (!img) img = IMGS[cfg.jln[0]];
-
+    function drawCharacter(cfg) {
+      const sx = P.x - cameraX;
+      if (P.dead) {
+        const img = IMGS[cfg.mati];
         if (img) {
           X.save();
+          // Lebar dead = tinggi walk (P.h=100px), tinggi dead = lebar walk (P.w=80px)
+          const renderW = P.h; // 100px lebar
+          const renderH = P.w; // 80px tinggi
+          const drawY = P.FL - renderH;
           if (P.fc < 0) {
-            X.translate(sx + P.w, P.y);
+            X.translate(sx + renderW, drawY);
             X.scale(-1, 1);
-            X.drawImage(img, 0, 0, P.w, P.h);
+            X.drawImage(img, 0, 0, renderW, renderH);
           } else {
-            X.drawImage(img, sx, P.y, P.w, P.h);
+            X.drawImage(img, sx, drawY, renderW, renderH);
           }
           X.restore();
         }
+        return;
+      }
 
-        // Hit flash overlay (merah transparan di atas karakter)
-        if (P.hitFlash > 0) {
-          const flashAlpha = (P.hitFlash / 0.35) * 0.55;
-          X.save();
-          X.globalAlpha = flashAlpha;
-          X.fillStyle = "#ff0000";
-          X.fillRect(sx, P.y, P.w, P.h);
-          X.restore();
+      let img;
+      // Semua animasi dirender dengan ukuran sama persis seperti walk (P.w x P.h)
+      if (P.reloading) {
+        img = P.crouching ? IMGS[cfg.nembakjongkok4] : IMGS[cfg.nembak4];
+      } else if (P.shooting && P.crouching) {
+        img =
+          IMGS[
+          cfg.nembakjongkok[
+          Math.min(P.shootFr, cfg.nembakjongkok.length - 1)
+          ]
+          ];
+      } else if (P.shooting) {
+        img = IMGS[cfg.nembak[Math.min(P.shootFr, cfg.nembak.length - 1)]];
+      } else if (P.jumping) {
+        img = IMGS[cfg.loncat[Math.min(P.fr, cfg.loncat.length - 1)]];
+      } else if (P.crouching) {
+        img = IMGS[cfg.jongkok[Math.min(P.fr, cfg.jongkok.length - 1)]];
+      } else if (P.running && Math.abs(P.vx) > 10) {
+        img = IMGS[cfg.lari[Math.min(P.fr, cfg.lari.length - 1)]];
+      } else {
+        img = IMGS[cfg.jln[Math.min(P.fr, cfg.jln.length - 1)]];
+      }
 
-          // Efek layar: vignette merah tipis di tepi layar
-          const vAlpha = (P.hitFlash / 0.35) * 0.3;
-          X.save();
-          X.globalAlpha = vAlpha;
-          const vg = X.createRadialGradient(400, 200, 150, 400, 200, 420);
-          vg.addColorStop(0, "rgba(255,0,0,0)");
-          vg.addColorStop(1, "rgba(255,0,0,0.9)");
-          X.fillStyle = vg;
-          X.fillRect(0, 0, 800, 400);
-          X.restore();
+      // Fallback: kalau img belum load, pakai frame walk pertama
+      if (!img) img = IMGS[cfg.jln[0]];
+
+      if (img) {
+        X.save();
+        if (P.fc < 0) {
+          X.translate(sx + P.w, P.y);
+          X.scale(-1, 1);
+          X.drawImage(img, 0, 0, P.w, P.h);
+        } else {
+          X.drawImage(img, sx, P.y, P.w, P.h);
         }
+        X.restore();
       }
 
-      // === GAME LOOP ===
-      function loop(ts) {
-        const dt = Math.min((ts - lt) / 1000, 0.05);
-        lt = ts;
-        upd(dt);
-        drw();
-        requestAnimationFrame(loop);
+      // Hit flash overlay (merah transparan di atas karakter)
+      if (P.hitFlash > 0) {
+        const flashAlpha = (P.hitFlash / 0.35) * 0.55;
+        X.save();
+        X.globalAlpha = flashAlpha;
+        X.fillStyle = "#ff0000";
+        X.fillRect(sx, P.y, P.w, P.h);
+        X.restore();
+
+        // Efek layar: vignette merah tipis di tepi layar
+        const vAlpha = (P.hitFlash / 0.35) * 0.3;
+        X.save();
+        X.globalAlpha = vAlpha;
+        const vg = X.createRadialGradient(400, 200, 150, 400, 200, 420);
+        vg.addColorStop(0, "rgba(255,0,0,0)");
+        vg.addColorStop(1, "rgba(255,0,0,0.9)");
+        X.fillStyle = vg;
+        X.fillRect(0, 0, 800, 400);
+        X.restore();
       }
+    }
+
+    // === GAME LOOP ===
+    function loop(ts) {
+      const dt = Math.min((ts - lt) / 1000, 0.05);
+      lt = ts;
+      upd(dt);
+      drw();
       requestAnimationFrame(loop);
-    </script>
-  </body>
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+
 </html>
