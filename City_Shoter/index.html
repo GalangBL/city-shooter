@@ -811,8 +811,8 @@
     let menuSelected = 0; // 0=PLAY, 1=SETTING, 2=EXIT
     let menuShowHelp = false;
     let menuShowSettings = false;
-    let menuFade = 0; // 0=transparan, 1=penuh (fade in saat buka)
-    let menuFadeOut = 0; // fade out saat PLAY ditekan
+    let menuFade = 1; // Default 1 agar menu langsung terlihat
+    let menuFadeOut = 0;
     let menuFadingOut = false;
     let menuBtnScale = [1, 1, 1]; // skala tiap tombol (hover effect)
     let gamePaused = false;        // true saat game di-pause
@@ -1562,7 +1562,7 @@
           X.shadowBlur = 0;
           if (isSel) { X.fillStyle = "#ff8800"; X.fillRect(btnX, by, 4, btnH); }
           X.fillStyle = isSel ? "#ffffff" : "#cccccc";
-          X.font = isSel ? "bold 15px Orbitron, monospace" : "13px Orbitron, monospace";
+          X.font = isSel ? "bold 15px 'Orbitron', monospace" : "13px 'Orbitron', monospace";
           X.textAlign = "left";
           X.fillText(label, btnX + 30, by + 28);
         });
@@ -1574,14 +1574,14 @@
           X.fillRect(0, 0, 800, 400);
           X.textAlign = "center";
           X.fillStyle = "#ff8800";
-          X.font = "bold 24px Orbitron, monospace";
+          X.font = "bold 24px 'Orbitron', monospace";
           X.fillText("PILIH MAP / STAGE", 400, 80);
           const stages = [{ id: 1, name: "URBAN ASSAULT", color: "#00eeff" }, { id: 2, name: "INDUSTRIAL ZONE", color: "#ffaa00" }, { id: 3, name: "FINAL SHOWDOWN", color: "#ff4400" }];
           stages.forEach((st, i) => {
             const sx = 100 + i * 210, sy = 140, sw = 180, sh = 120;
             X.fillStyle = "rgba(255,255,255,0.1)"; X.fillRect(sx, sy, sw, sh);
             X.strokeStyle = st.color; X.strokeRect(sx, sy, sw, sh);
-            X.fillStyle = st.color; X.font = "bold 35px Orbitron, monospace"; X.fillText(st.id, sx + sw / 2, sy + 60);
+            X.fillStyle = st.color; X.font = "bold 35px 'Orbitron', monospace"; X.fillText(st.id, sx + sw / 2, sy + 60);
             X.fillStyle = "#ffffff"; X.font = "bold 11px monospace"; X.fillText(st.name, sx + sw / 2, sy + 95);
           });
           X.fillStyle = "#aaaaaa"; X.font = "12px monospace"; X.fillText("KLIK KOTAK UNTUK PILIH | KLIK LUAR UNTUK KEMBALI", 400, 320);
