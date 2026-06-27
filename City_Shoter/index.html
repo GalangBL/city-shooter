@@ -1299,20 +1299,42 @@
 
         // === MAIN MENU ===
         if (gamePhase === "menu") {
-          // Background menu pakai gambar custom dari ChatGPT
-          const bgImg = IMGS["bgmenu"] || IMGS["bg1"];
-          if (bgImg) {
-            X.drawImage(bgImg, 0, 0, 800, 400);
-          } else {
-            X.fillStyle = "#0a0a1a";
-            X.fillRect(0, 0, 800, 400);
-          }
-          X.fillStyle = "rgba(0,0,0,0.45)";
+          // Background gelap gradient
+          const g = X.createLinearGradient(0, 0, 0, 400);
+          g.addColorStop(0, "#0a0a1a");
+          g.addColorStop(1, "#050510");
+          X.fillStyle = g;
           X.fillRect(0, 0, 800, 400);
+
+          // Garis dekorasi kiri
+          X.strokeStyle = "rgba(255,136,0,0.2)";
+          X.lineWidth = 1;
+          X.beginPath();
+          X.moveTo(400, 0);
+          X.lineTo(400, 400);
+          X.stroke();
+
+          // === KANAN: Gambar asset dari ChatGPT ===
+          const menuArt = IMGS["bgmenu"];
+          if (menuArt) {
+            // Tampilkan sebagai asset di sisi kanan, bukan full background
+            X.save();
+            X.globalAlpha = 0.92;
+            // Crop dan tampilkan di area kanan (400-800, full height)
+            X.drawImage(menuArt, 400, 0, 400, 400);
+            // Gradient fade ke kiri supaya menyatu dengan background
+            const fade = X.createLinearGradient(400, 0, 560, 0);
+            fade.addColorStop(0, "rgba(8,8,20,1)");
+            fade.addColorStop(1, "rgba(8,8,20,0)");
+            X.globalAlpha = 1;
+            X.fillStyle = fade;
+            X.fillRect(400, 0, 160, 400);
+            X.restore();
+          }
 
           // === LAYAR BANTUAN ===
           if (menuShowHelp) {
-            X.fillStyle = "rgba(0,0,0,0.85)";
+            X.fillStyle = "rgba(0,0,0,0.88)";
             X.fillRect(80, 40, 640, 320);
             X.strokeStyle = "#ff8800";
             X.lineWidth = 2;
@@ -1324,12 +1346,12 @@
             X.fillStyle = "#fff";
             X.font = "14px monospace";
             const helps = [
-              "A / ← →  D  =  Gerak kiri kanan",
-              "SHIFT       =  Lari",
-              "W / ↑       =  Lompat",
-              "S / ↓       =  Jongkok (hindari peluru)",
-              "SPACE       =  Tembak",
-              "R           =  Reload senjata",
+              "A / ←  →  D  =  Gerak kiri kanan",
+              "SHIFT        =  Lari",
+              "W / ↑        =  Lompat",
+              "S / ↓        =  Jongkok (hindari peluru)",
+              "SPACE        =  Tembak",
+              "R            =  Reload senjata",
               "",
               "Kalahkan semua musuh sebelum waktu habis!",
               "Level 3 : Lawan FINAL BOSS",
@@ -1345,69 +1367,73 @@
             return;
           }
 
-          // === TITLE ===
-          X.textAlign = "center";
-          X.shadowColor = "#ff4400";
-          X.shadowBlur = 35;
+          // === KIRI: TITLE + MENU ===
+          X.textAlign = "left";
+
+          // Garis aksen oranye
           X.fillStyle = "#ff8800";
-          X.font = "900 58px 'Orbitron', monospace";
-          X.fillText("CITY SHOOTER", 400, 120);
+          X.fillRect(30, 55, 4, 60);
+
+          // Judul
+          X.shadowColor = "#ff4400";
+          X.shadowBlur = 25;
+          X.fillStyle = "#ff8800";
+          X.font = "900 42px 'Orbitron', monospace";
+          X.fillText("CITY", 44, 95);
+          X.fillStyle = "#ffffff";
+          X.font = "900 42px 'Orbitron', monospace";
+          X.fillText("SHOOTER", 44, 138);
           X.shadowBlur = 0;
-          X.fillStyle = "#ffdd00";
-          X.font = "bold 12px 'Orbitron', monospace";
-          X.fillText("3 STAGE  •  FINAL BOSS  •  SIDE SCROLLER", 400, 150);
+
+          X.fillStyle = "rgba(255,221,0,0.8)";
+          X.font = "bold 10px 'Orbitron', monospace";
+          X.fillText("3 STAGE  •  FINAL BOSS  •  SIDE SCROLLER", 44, 162);
+
+          // Garis pemisah
+          X.strokeStyle = "rgba(255,136,0,0.4)";
+          X.lineWidth = 1;
+          X.beginPath();
+          X.moveTo(30, 180);
+          X.lineTo(370, 180);
+          X.stroke();
 
           // High Score
           if (highScore > 0) {
             X.fillStyle = "#ffdd00";
-            X.font = "bold 12px monospace";
-            X.fillText("🏆 BEST: " + highScore, 400, 178);
+            X.font = "bold 11px monospace";
+            X.fillText("🏆  BEST SCORE: " + highScore, 30, 200);
           }
 
           // === MENU ITEMS ===
           const menuItems = ["▶   MAIN SEKARANG", "?   CARA BERMAIN"];
-          const menuY = [245, 305];
+          const menuY = [245, 300];
           menuItems.forEach((item, i) => {
             const selected = menuSelected === i;
             const py = menuY[i];
-
-            // Shadow/glow saat dipilih
             if (selected) {
               X.shadowColor = "#ff8800";
-              X.shadowBlur = 20;
+              X.shadowBlur = 15;
             }
-
-            // Background tombol
-            X.fillStyle = selected ? "rgba(255,136,0,0.3)" : "rgba(0,0,0,0.55)";
-            X.fillRect(250, py - 26, 300, 50);
-
-            // Border
-            X.strokeStyle = selected ? "#ff8800" : "rgba(255,136,0,0.35)";
+            X.fillStyle = selected ? "rgba(255,136,0,0.25)" : "rgba(0,0,0,0.5)";
+            X.fillRect(30, py - 24, 340, 46);
+            X.strokeStyle = selected ? "#ff8800" : "rgba(255,136,0,0.3)";
             X.lineWidth = selected ? 2 : 1;
-            X.strokeRect(250, py - 26, 300, 50);
-
-            // Teks
-            X.fillStyle = selected ? "#ffffff" : "#aaaaaa";
-            X.font = selected ? "bold 18px monospace" : "16px monospace";
-            X.fillText(item, 400, py + 2);
-            X.shadowBlur = 0;
-
-            // Selector panah kiri
+            X.strokeRect(30, py - 24, 340, 46);
+            // Aksen kiri saat dipilih
             if (selected) {
               X.fillStyle = "#ff8800";
-              X.font = "bold 16px monospace";
-              X.fillText("►", 258, py + 2);
+              X.fillRect(30, py - 24, 4, 46);
             }
+            X.fillStyle = selected ? "#ffffff" : "#888888";
+            X.font = selected ? "bold 17px monospace" : "15px monospace";
+            X.fillText(item, 50, py + 5);
+            X.shadowBlur = 0;
           });
 
-          // Petunjuk navigasi
-          X.fillStyle = "rgba(150,150,150,0.7)";
-          X.font = "11px monospace";
-          X.fillText(
-            "↑ ↓ untuk pilih  •  ENTER / TAP untuk konfirmasi",
-            400,
-            375,
-          );
+          // Petunjuk
+          X.fillStyle = "rgba(120,120,120,0.7)";
+          X.font = "10px monospace";
+          X.fillText("↑ ↓ pilih   ENTER / TAP konfirmasi", 30, 370);
           X.textAlign = "left";
           return;
         }
